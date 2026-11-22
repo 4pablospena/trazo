@@ -1,7 +1,9 @@
 import { useCallback, useState } from 'react';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
-import { Check, ChevronDown, Clock3, Download, FileCode2, FileImage, FileJson, Image, LoaderCircle, Moon, PanelsTopLeft, Plus, Sun, TriangleAlert, X } from 'lucide-react';
+import { Check, ChevronDown, Clock3, Download, FileCode2, FileImage, FileJson, Image, Link2, LoaderCircle, Moon, PanelsTopLeft, Plus, Sun, TriangleAlert, X } from 'lucide-react';
 import { useWorkspace } from './useWorkspace';
+import { useMcpConnection } from './useMcpConnection';
+import { McpConnectionDialog } from './components/McpConnectionDialog';
 import { Logo } from './components/Logo';
 import { Editor } from './components/Editor';
 import { EditorErrorBoundary } from './components/ErrorBoundary';
@@ -14,6 +16,8 @@ import type { BoardMeta } from './lib/storage';
 
 export default function App() {
   const workspace = useWorkspace();
+  const mcp = useMcpConnection(workspace.executeMcp);
+  const [mcpOpen, setMcpOpen] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<BoardMeta>();
   const [renameTarget, setRenameTarget] = useState<BoardMeta>();
   const [renameDraft, setRenameDraft] = useState('');
@@ -34,7 +38,7 @@ export default function App() {
 
   const saveLabel = status === 'saved' ? 'Guardado' : status === 'saving' ? 'Guardando…' : status === 'pending' ? 'Cambios pendientes' : 'Sin guardar';
   return <div className="workspace-app flex h-dvh flex-col overflow-hidden">
-    <header className="app-header flex h-[62px] shrink-0 items-center gap-3 px-3 sm:px-5">
+    <header className="app-header flex h-[62px] shrink-0 items-center gap-2 px-3 sm:gap-3 sm:px-5">
       <span className="hidden shrink-0 text-violet-600 sm:inline-flex"><Logo /></span>
       <span className="header-divider mx-1 hidden h-5 sm:block" />
       <button className="secondary-button shrink-0 !px-2.5 sm:!px-3" onClick={workspace.openBoards} disabled={busy} title="Mis tableros" aria-label="Abrir mis tableros"><PanelsTopLeft size={17} /><span className="hidden sm:inline">Tableros</span></button>
@@ -46,6 +50,7 @@ export default function App() {
         <span className="hidden lg:inline">{saveLabel}</span><span className="sr-only lg:hidden">{saveLabel}</span>
       </div>
       <button className="icon-button app-theme-toggle ml-1 hidden sm:inline-flex" onClick={() => workspace.changeTheme(theme === 'dark' ? 'light' : 'dark')} aria-label={theme === 'dark' ? 'Activar tema claro' : 'Activar tema oscuro'}>{theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}</button>
+      <button className="secondary-button shrink-0 !px-2.5" onClick={() => setMcpOpen(true)} aria-label="Conectar lienzo al MCP" data-mcp-status={mcp.status} title={mcp.status === 'connected' ? 'MCP conectado' : 'Conectar MCP'}><Link2 size={18} /><span className="hidden xl:inline">MCP</span></button>
       <button className="secondary-button shrink-0 !px-2.5" onClick={openConverter} disabled={busy} aria-label="Convertir Mermaid o Markdown" title="Convertir Mermaid o Markdown"><FileCode2 size={18} /><span className="hidden lg:inline">Convertir</span></button>
       <button className="secondary-button shrink-0 !px-2.5" onClick={workspace.openNew} disabled={busy} aria-label="Nuevo tablero" title="Nuevo tablero"><Plus size={18} /><span className="hidden xl:inline">Nuevo</span></button>
       <Menu>
@@ -75,6 +80,8 @@ export default function App() {
       </EditorErrorBoundary>
       {busy && <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-[1px]" role="status"><span className="operation-badge"><LoaderCircle size={18} className="animate-spin" />Guardando y abriendo…</span></div>}
     </main>
+
+    <McpConnectionDialog open={mcpOpen} onClose={() => setMcpOpen(false)} mcp={mcp} />
 
     <BoardPanel open={workspace.boardsOpen} onClose={() => workspace.setBoardsOpen(false)} boards={workspace.boards} activeId={active.document.id} busy={busy}
       onSelect={id => void workspace.selectBoard(id)} onNew={workspace.openNew} onImport={workspace.openImport}

@@ -135,8 +135,13 @@ export function createBoardRepository(databaseName = 'trazo-workspace-v1') {
         return { meta: updated, revision };
       });
     },
-    async remove(id: string): Promise<void> {
+    async remove(id: string, expectedRevision?: number): Promise<void> {
       return transaction(['boards', 'scenes'], 'readwrite', async tx => {
+        if (expectedRevision !== undefined) {
+          const previous = await request<SceneRecord | undefined>(tx.objectStore('scenes').get(id));
+          if (!previous) throw new Error('El tablero ya no existe.');
+          if (previous.revision !== expectedRevision) throw new BoardConflictError();
+        }
         await Promise.all([
           request(tx.objectStore('boards').delete(id)),
           request(tx.objectStore('scenes').delete(id)),

@@ -64,9 +64,9 @@ Los datos se guardan en IndexedDB, asociados al navegador y a la dirección usad
 
 Si falla el guardado, se muestra un aviso con las acciones de reintentar y descargar una copia. Una escritura desde una pestaña desactualizada se rechaza para conservar la versión guardada por la otra pestaña. En ese caso, descargar la copia del dibujo abierto y recargar la página.
 
-## MCP local — primera fase
+## MCP local — servidor y herramientas
 
-El servidor utiliza el mismo patrón HTTP de Mochi y Resizes.ai: `/mcp` y `/mcp/`, clave en `Authorization: Bearer`, protocolo sin sesiones y claves revocables. **Esta primera fase permite conectar el cliente, consultar herramientas y comprobar la conexión. El catálogo de herramientas está vacío hasta conectar el puente con el editor en la segunda fase.** El panel de configuración llegará en la tercera fase.
+El servidor utiliza el mismo patrón HTTP de Mochi y Resizes.ai: `/mcp` y `/mcp/`, clave en `Authorization: Bearer`, protocolo sin sesiones y claves revocables. Las ocho herramientas trabajan sobre los tableros reales del navegador vinculado. El botón **MCP** de la barra superior permite vincular y desconectar el lienzo. El panel con configuraciones copiables para Cursor, Claude Code y Codex llegará en la tercera fase.
 
 Requiere Node.js 24. El servidor escucha únicamente en `127.0.0.1:5174`, independientemente del editor en el puerto 5173. Para activarlo en otra terminal:
 
@@ -85,6 +85,34 @@ npm run mcp:keys -- revoke --id IDENTIFICADOR
 ```
 
 La creación devuelve el secreto una sola vez. `list` muestra identificadores y metadatos; no permite recuperar el secreto. Cada clave dura de 1 a 365 días y hay un límite de 20 claves activas. La revocación se aplica a la siguiente solicitud, sin reiniciar el servidor. El acceso a la terminal y a la carpeta privada del usuario administra las claves; el servidor HTTP no expone una ruta pública para crearlas.
+
+### Vincular el navegador
+
+Con Trazo abierto y el servidor MCP activado, genera un código desde otra terminal:
+
+```sh
+npm run mcp:keys -- pair
+```
+
+Pulsa **MCP** en la barra superior, pega el campo `code` en **Código de vinculación** y pulsa **Vincular navegador**. Si elegiste otro puerto, ajusta **Servidor local**. El código se consume una sola vez y caduca a los diez minutos. Autoriza el acceso a todos los tableros de ese espacio local. Los clientes que tengan una clave API válida podrán trabajar sobre ellos mientras esté conectado.
+
+El código de vinculación y las claves API cumplen funciones distintas. El navegador obtiene una credencial propia; una clave de una IA no puede hacerse pasar por el editor. El servidor conserva solo hashes de los códigos y de las credenciales del enlace. La credencial del navegador se conserva en `sessionStorage` de esa pestaña, dura ocho horas y permite reconectar tras una recarga. La reconexión puede tardar 15 segundos al liberar la reserva de la pestaña anterior. Si el servidor se reinicia, genera otro código y vuelve a vincular.
+
+Mantén la pestaña abierta. Se admite un navegador vinculado y una pestaña ejecutora a la vez. **Desconectar este navegador** corta el enlace, sin eliminar tableros ni revocar las claves de los clientes. Si cierras Trazo, las herramientas devuelven un error de conexión en lugar de anunciar cambios guardados.
+
+### Herramientas
+
+- `list_boards`: lista y busca tableros; devuelve el identificador del tablero abierto.
+- `get_board`: devuelve la escena editable como JSON y su revisión. `includeFiles: true` incluye los datos de imágenes.
+- `create_board`: crea y abre un tablero con una plantilla (`blank`, `flow`, `kanban`, `notes`) o una escena Excalidraw completa.
+- `update_board`: sustituye la escena con `boardId`, `expectedRevision` y `scene`. Conserva los archivos de imagen existentes si no se envían y permite deshacer el cambio desde el editor.
+- `rename_board` y `delete_board`: requieren `boardId` y `expectedRevision`. El borrado es permanente.
+- `convert_document`: convierte `content` con formato `auto`, `mermaid` o `markdown` en un tablero nuevo. Devuelve los recuentos de bloques, elementos y diagramas insertados como imágenes.
+- `export_board`: devuelve el archivo `.excalidraw`, un recurso SVG o una imagen PNG mediante MCP; no inicia una descarga en el navegador.
+
+Antes de cada operación se guarda el dibujo pendiente. Obtén `expectedRevision` con `get_board`; una versión antigua rechaza el cambio sin sobrescribir el dibujo. Las escrituras se confirman después de guardarlas en IndexedDB. Los comandos se ejecutan en orden y no se reenvían automáticamente. Si se pierde la confirmación de una operación iniciada, el error indica que el cambio puede haberse aplicado: consulta el tablero antes de repetirlo.
+
+El límite es de 20 comandos en espera, 90 segundos por comando, 5000 elementos por escena y 8 MB por archivo exportado o escena leída. Las peticiones MCP siguen limitadas a 1 MB. El canal privado de respuestas del navegador admite hasta 16 MB para devolver archivos codificados. Los tableros y sus imágenes permanecen en IndexedDB; el servidor mantiene los comandos en memoria mientras se ejecutan.
 
 Las claves se guardan como SHA-256 de un secreto aleatorio de 256 bits en `keys.sqlite`. En macOS, la carpeta predeterminada es `~/Library/Application Support/Trazo/mcp/`; en otros sistemas se utiliza `$XDG_DATA_HOME/Trazo/mcp/` o `~/.local/share/Trazo/mcp/`. `TRAZO_MCP_DATA_DIR` permite cambiarla, tanto al arrancar como al gestionar claves. La carpeta debe tener permisos 700 y el archivo 600. No se admiten enlaces simbólicos para la carpeta final ni el archivo. Las claves no se guardan en los tableros ni en el repositorio.
 
@@ -116,7 +144,10 @@ Las fuentes se sincronizan desde el paquete oficial a `public/fonts/` antes de a
 - `src/lib/document-input.ts`: lectura de archivos y separación de texto, código y bloques Mermaid.
 - `src/lib/convert-document.ts`: conversión y disposición de los elementos, con sus imágenes.
 - `scripts/rea-mcp.mjs`: cliente local MCP usado en la investigación y las comprobaciones de navegador.
-- `server/`: servidor MCP local, protocolo y almacenamiento de claves; su entrada es `server/index.mjs`.
+- `server/`: servidor MCP local, protocolo, cola del enlace con el navegador y almacenamiento de claves; su entrada es `server/index.mjs`.
+- `shared/mcp-contract.ts`: herramientas, esquemas y validación compartidos entre servidor y navegador.
+- `src/lib/workspace-tools.ts`: operaciones MCP sobre el repositorio, conversión y exportación del editor.
+- `src/lib/mcp-bridge.ts`: vinculación, reserva de la pestaña, recepción de comandos y confirmaciones.
 - `scripts/mcp-keys.mjs`: creación, listado y revocación local de claves.
 
 ## Versión y alcance

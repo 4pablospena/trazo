@@ -14,7 +14,7 @@ function validHost(value, port) {
   } catch { return false; }
 }
 
-function readJson(req) {
+function readJson(req, limit = MAX_BODY_BYTES) {
   return new Promise((resolve, reject) => {
     const chunks = [];
     let size = 0;
@@ -25,7 +25,7 @@ function readJson(req) {
     const onError = () => fail(400);
     const onData = chunk => {
       size += chunk.length;
-      if (size > MAX_BODY_BYTES) { fail(413); req.resume(); }
+      if (size > limit) { fail(413); req.resume(); }
       else chunks.push(chunk);
     };
     const onEnd = () => {
@@ -37,7 +37,7 @@ function readJson(req) {
   });
 }
 
-export function createMcpServer({ keyStore, enabled = false, tools = [], callTool, now = Date.now, allowedOrigins = DEFAULT_ORIGINS } = {}) {
+export function createMcpServer({ keyStore, enabled = false, tools = [], callTool, bridge, now = Date.now, allowedOrigins = DEFAULT_ORIGINS } = {}) {
   enabled = isMcpEnabled(enabled);
   const origins = new Set(allowedOrigins);
   const attempts = new Map();
@@ -68,6 +68,26 @@ export function createMcpServer({ keyStore, enabled = false, tools = [], callToo
       }
       const path = req.url?.split('?')[0];
       if (path === '/health' && req.method === 'GET') return send(200, { name: 'Trazo', mcpEnabled: enabled });
+      if (path?.startsWith('/bridge/')) {
+        if (!enabled || !bridge) return send(404, 'Not Found');
+        if (!origin) return send(403, { error: 'El enlace debe iniciarse desde Trazo.' });
+        res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+        res.setHeader('Access-Control-Allow-Headers', 'Authorization, Content-Type');
+        if (req.method === 'OPTIONS') return send(204);
+        if (req.method !== 'POST') return send(405, null, { Allow: 'POST, OPTIONS' });
+        if (!/^application\/json(?:\s*;|$)/i.test(req.headers['content-type'] ?? '')) return send(415, { error: 'Se requiere JSON.' });
+        try {
+          const body = await readJson(req, path === '/bridge/result' ? 16 * MAX_BODY_BYTES : MAX_BODY_BYTES);
+          if (!body || typeof body !== 'object' || Array.isArray(body)) return send(400, { error: 'Se requiere un objeto JSON.' });
+          if (path === '/bridge/connect') return send(200, bridge.connect(body.code, body.workspaceId));
+          const token = /^Bearer (\S+)$/i.exec(req.headers.authorization ?? '')?.[1];
+          if (path === '/bridge/poll') return send(200, { command: await bridge.poll(token, body.consumerId) });
+          if (path === '/bridge/heartbeat') { bridge.heartbeat(token, body.consumerId); return send(200, { connected: true }); }
+          if (path === '/bridge/result') { bridge.complete(token, body.consumerId, body.id, body.result); return send(200, { accepted: true }); }
+          if (path === '/bridge/disconnect') { bridge.disconnect(token, body.consumerId); return send(200, { disconnected: true }); }
+          return send(404, 'Not Found');
+        } catch (error) { return send(error.status ?? 400, { error: error.message || 'No se pudo leer la solicitud del enlace.' }); }
+      }
       if (path !== '/mcp' && path !== '/mcp/') return send(404, 'Not Found');
       if (!enabled) return send(404, 'Not Found');
 

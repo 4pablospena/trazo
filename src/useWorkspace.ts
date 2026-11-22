@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
-import { exportScene, getNonDeletedElements } from '@excalidraw/excalidraw';
+import { CaptureUpdateAction, exportScene, getNonDeletedElements } from '@excalidraw/excalidraw';
+import type { BridgeCommand } from '../shared/mcp-contract';
+import { createWorkspaceTools } from './lib/workspace-tools';
 import type { AppState, BinaryFiles, ExcalidrawImperativeAPI, ExcalidrawInitialDataState, LibraryItems } from '@excalidraw/excalidraw/types';
 import type { ExcalidrawElement } from '@excalidraw/excalidraw/element/types';
 import { boardsRepository as store, type BoardDocument, type BoardMeta } from './lib/storage';
@@ -34,6 +36,7 @@ export function useWorkspace() {
   const locked = useRef(false);
   const library = useRef<LibraryItems>([]);
   const fileInput = useRef<HTMLInputElement>(null);
+  const [workspaceTools] = useState(() => createWorkspaceTools(store));
 
   const [saver] = useState(() => new SaveQueue<PendingSave>(async value => {
     const revision = revisions.current.get(value.id);
@@ -284,6 +287,45 @@ export function useWorkspace() {
     finally { setExporting(false); }
   }, [theme, exporting]);
 
+  const executeMcp = useCallback(async (command: BridgeCommand, signal?: AbortSignal) => {
+    const waitingUntil = Math.min(command.deadline, Date.now() + 10_000);
+    while ((!ready.current || locked.current) && Date.now() < waitingUntil) {
+      signal?.throwIfAborted();
+      await new Promise<void>(resolve => setTimeout(resolve, 50));
+    }
+    signal?.throwIfAborted();
+    if (!ready.current || locked.current) throw new Error('El editor está ocupado o todavía no está preparado. Vuelve a intentarlo.');
+    locked.current = true;
+    setBusy(true);
+    let committed = false;
+    try {
+      await flush();
+      const result = await workspaceTools(command, current.current?.document.id, signal);
+      committed = result.changed === true;
+      if (result.changed) setBoards(await store.list());
+      if (result.activate) await activate(result.activate);
+      else if (result.updated && current.current?.document.id === result.updated.id) {
+        const document = result.updated;
+        const data = await parseScene(document.scene);
+        revisions.current.set(document.id, document.revision);
+        if (command.name === 'update_board' && api.current) {
+          api.current.addFiles(Object.values(data.files ?? {}));
+          api.current.updateScene({ elements: data.elements ?? [], appState: { viewBackgroundColor: data.appState?.viewBackgroundColor ?? '#ffffff', selectedElementIds: {} }, captureUpdate: CaptureUpdateAction.IMMEDIATELY });
+          if (data.elements?.length) api.current.setViewport({ target: data.elements, fit: 'scale-down' });
+        }
+        const next = { document, data: current.current.data };
+        current.current = next;
+        setActive(next);
+        fingerprint.current = `${document.name}\u0000${sceneFingerprint({ elements: data.elements ?? [], appState: data.appState ?? {}, files: data.files ?? {} })}`;
+      }
+      return result.value;
+    } catch (error) {
+      const message = committed ? 'El cambio se guardó, pero no se pudo actualizar el lienzo. Recarga Trazo antes de repetir la operación.' : errorMessage(error);
+      setNotice(message);
+      throw new Error(message);
+    } finally { locked.current = false; setBusy(false); }
+  }, [flush, workspaceTools, activate]);
+
   const status: SaveStatus = sceneStatus === 'error' || libraryStatus === 'error' ? 'error'
     : sceneStatus === 'saving' || libraryStatus === 'saving' ? 'saving'
     : sceneStatus === 'pending' || libraryStatus === 'pending' ? 'pending' : 'saved';
@@ -291,7 +333,7 @@ export function useWorkspace() {
   return { active, boards, fatal, notice, setNotice, busy, editorReady, status, saveError, theme, changeTheme,
     boardsOpen, setBoardsOpen, templatesOpen, setTemplatesOpen, fileInput, exporting,
     onApi, onReady, onChange, onLibraryChange, renameActive, selectBoard, createBoard, duplicateBoard, renameBoard, removeBoard,
-    importFile, exportBoard, flush, createDocumentBoard,
+    importFile, exportBoard, flush, createDocumentBoard, executeMcp,
     openImport: useCallback(() => fileInput.current?.click(), []),
     openNew: useCallback(() => { setBoardsOpen(false); setTemplatesOpen(true); }, []),
     openBoards: useCallback(() => { setBoardsOpen(true); void store.list().then(setBoards).catch(error => setNotice(errorMessage(error))); }, []),

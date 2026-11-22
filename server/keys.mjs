@@ -31,10 +31,24 @@ export function createKeyStore({ directory = dataDirectory(), now = Date.now } =
         key_hash TEXT NOT NULL UNIQUE, created_at INTEGER NOT NULL,
         expires_at INTEGER NOT NULL, revoked_at INTEGER, last_used_at INTEGER
       );
+      CREATE TABLE IF NOT EXISTS pairing_codes (hash TEXT PRIMARY KEY, expires_at INTEGER NOT NULL);
     `);
   } catch (error) { db.close(); throw error; }
 
   return {
+    createPairingCode() {
+      const time = now();
+      db.prepare('DELETE FROM pairing_codes WHERE expires_at <= ?').run(time);
+      const code = `trazo_pair_${randomBytes(32).toString('base64url')}`;
+      const expiresAt = time + 10 * 60_000;
+      const created = db.prepare('INSERT INTO pairing_codes (hash, expires_at) SELECT ?, ? WHERE (SELECT COUNT(*) FROM pairing_codes) < 5 RETURNING hash').get(hash(code), expiresAt);
+      if (!created) throw new Error('Ya hay cinco códigos pendientes. Espera a que caduquen.');
+      return { code, expiresAt };
+    },
+    redeemPairingCode(code) {
+      if (typeof code !== 'string' || !/^trazo_pair_[A-Za-z0-9_-]{43}$/.test(code)) return false;
+      return Boolean(db.prepare('DELETE FROM pairing_codes WHERE hash = ? AND expires_at > ? RETURNING hash').get(hash(code), now()));
+    },
     create({ name, days = 30 } = {}) {
       if (typeof name !== 'string' || !name.trim() || name.trim().length > 80) throw new Error('Indica un nombre de hasta 80 caracteres.');
       if (!Number.isInteger(days) || days < 1 || days > 365) throw new Error('La duración debe ser un número entero entre 1 y 365 días.');

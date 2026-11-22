@@ -19,3 +19,18 @@ node scripts/rea-mcp.mjs call capture_browser_scenario tests/browser/document-co
 El escenario espera a que termine la página. Revisar su salida de accesibilidad: debe contener **Pruebas superadas**. Un escenario MCP completado no sustituye esa comprobación del resultado de las pruebas.
 
 El escenario adicional `document-import-ui.scenario.json` verifica el diálogo de la aplicación, la corrección de un Mermaid inválido, la vista previa, la creación del tablero y su recuperación al recargar. Ambos escenarios usan perfiles nuevos propiedad del proveedor.
+
+
+## MCP con la aplicación real
+
+Con Trazo sirviendo en `http://127.0.0.1:5173/`, Chrome instalado y REA disponible, deja libre el puerto 5174 y ejecuta:
+
+```sh
+node tests/browser/mcp-live.mjs
+```
+
+Para comprobar una compilación servida por `npm run preview`, usa `TRAZO_TEST_APP_URL=http://127.0.0.1:4173/ node tests/browser/mcp-live.mjs`.
+
+La prueba arranca su propio servidor MCP con claves y códigos temporales. REA abre un perfil de Chrome aislado y vincula el navegador mediante el diálogo real. El SDK oficial realiza llamadas HTTP para crear, leer, modificar, renombrar, convertir, exportar y eliminar tableros. También comprueba el botón Deshacer del editor, el rechazo de revisiones antiguas, los archivos de imágenes y la recuperación del dibujo y del enlace tras recargar.
+
+El resultado debe ser `passed: true` en `.research/mcp-live-report.json`. El escenario y las evidencias quedan en `.research/mcp-live-scenario.json` y `.research/mcp-live-evidence.json`. El código del escenario es temporal y de un solo uso; la clave API no se escribe en esos archivos. La prueba cierra su servidor y elimina la base de claves al terminar. No utiliza claves personales ni abre el almacenamiento del navegador habitual.
