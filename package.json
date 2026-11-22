@@ -7,15 +7,15 @@
     "node": ">=24.0.0"
   },
   "scripts": {
-    "predev": "node scripts/prepare-assets.mjs",
     "dev": "vite --host 127.0.0.1",
-    "prebuild": "node scripts/prepare-assets.mjs",
     "build": "tsc -b && vite build",
     "preview": "vite preview --host 127.0.0.1",
     "typecheck": "tsc -b",
     "test": "vitest run && npm run test:mcp",
     "test:mcp": "node --test server/test/*.test.mjs",
     "mcp": "node --env-file-if-exists=.env server/index.mjs",
+    "conectar": "node --env-file-if-exists=.env scripts/connect-mcp.mjs",
+    "api:key": "node --env-file-if-exists=.env scripts/mcp-keys.mjs create --name \"Mi IA\" --plain",
     "mcp:keys": "node --env-file-if-exists=.env scripts/mcp-keys.mjs"
   },
   "dependencies": {

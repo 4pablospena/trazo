@@ -2,19 +2,22 @@ import { useState } from 'react';
 import { KeyRound, LoaderCircle, Plus } from 'lucide-react';
 import type { useMcpKeys } from '../useMcpKeys';
 import type { ApiKeyMetadata, IssuedApiKey } from '../lib/mcp-bridge';
+import { McpCopyButton } from './McpCopyButton';
 
 const date = (time: number) => new Date(time).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
 export function McpApiKeys({ keys, connected, onIssued, onRevoked }: { keys: ReturnType<typeof useMcpKeys>; connected: boolean; onIssued: (key: IssuedApiKey) => void; onRevoked: (row: ApiKeyMetadata) => void }) {
-  const [name, setName] = useState('');
+  const [name, setName] = useState('Mi IA');
   const [days, setDays] = useState('30');
   const [confirmation, setConfirmation] = useState<string>();
   return <section className="mcp-card" aria-labelledby="mcp-keys-title">
     <h3 id="mcp-keys-title" className="mb-2 flex items-center gap-2 font-semibold"><KeyRound size={18} />2. Crea una clave para tu IA</h3>
     <p className="muted text-sm">Usa una clave distinta para cada cliente. Solo podrás copiarla al crearla.</p>
+    <div className="mcp-command-row mt-3"><code>npm run api:key</code><McpCopyButton value="npm run api:key" label="Copiar comando API" /></div>
+    <p className="muted mt-2 text-xs">Este comando muestra una clave API lista para copiar. También puedes crearla aquí después de vincular.</p>
     {!connected && <p className="muted mt-3 text-sm">Vincula este navegador para crear o revocar claves. También puedes pegar una clave que ya tengas en el panel de configuración.</p>}
     {connected && <>
       <form className="mt-4 space-y-3" onSubmit={event => {
-        event.preventDefault(); void keys.create(name, Number(days)).then(value => { onIssued(value); setName(''); }).catch(() => undefined);
+        event.preventDefault(); void keys.create(name, Number(days)).then(value => { onIssued(value); }).catch(() => undefined);
       }}>
         <label className="block text-sm font-medium" htmlFor="mcp-key-name">Nombre de la clave</label>
         <input id="mcp-key-name" className="text-field w-full" placeholder="Cursor en mi portátil" value={name} onChange={event => setName(event.target.value)} maxLength={80} disabled={keys.busy} required />

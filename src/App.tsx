@@ -1,4 +1,5 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
+import { parseMcpInvite, type McpInvite } from './lib/mcp-invite';
 import { Menu, MenuButton, MenuItem, MenuItems } from '@headlessui/react';
 import { Check, ChevronDown, Clock3, Download, FileCode2, FileImage, FileJson, Image, Link2, LoaderCircle, Moon, PanelsTopLeft, Plus, Sun, TriangleAlert, X } from 'lucide-react';
 import { useWorkspace } from './useWorkspace';
@@ -18,6 +19,18 @@ export default function App() {
   const workspace = useWorkspace();
   const mcp = useMcpConnection(workspace.executeMcp);
   const [mcpOpen, setMcpOpen] = useState(false);
+  const [mcpInvite, setMcpInvite] = useState<McpInvite>();
+  useEffect(() => {
+    const receiveInvite = () => {
+      const hash = window.location.hash;
+      if (!new URLSearchParams(hash.slice(1)).has('trazo_mcp_code')) return;
+      const invite = parseMcpInvite(hash);
+      window.history.replaceState(window.history.state, '', window.location.pathname + window.location.search);
+      if (invite) { setMcpInvite(invite); setMcpOpen(true); }
+    };
+    receiveInvite(); window.addEventListener('hashchange', receiveInvite);
+    return () => window.removeEventListener('hashchange', receiveInvite);
+  }, []);
   const [deleteTarget, setDeleteTarget] = useState<BoardMeta>();
   const [renameTarget, setRenameTarget] = useState<BoardMeta>();
   const [renameDraft, setRenameDraft] = useState('');
@@ -81,7 +94,7 @@ export default function App() {
       {busy && <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/40 backdrop-blur-[1px]" role="status"><span className="operation-badge"><LoaderCircle size={18} className="animate-spin" />Guardando y abriendo…</span></div>}
     </main>
 
-    <McpConnectionDialog open={mcpOpen} onClose={() => setMcpOpen(false)} mcp={mcp} />
+    <McpConnectionDialog open={mcpOpen} onClose={() => { setMcpOpen(false); setMcpInvite(undefined); }} mcp={mcp} invite={mcpInvite} />
 
     <BoardPanel open={workspace.boardsOpen} onClose={() => workspace.setBoardsOpen(false)} boards={workspace.boards} activeId={active.document.id} busy={busy}
       onSelect={id => void workspace.selectBoard(id)} onNew={workspace.openNew} onImport={workspace.openImport}

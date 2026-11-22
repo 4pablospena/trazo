@@ -8,20 +8,24 @@ const help = `Uso:
   npm run mcp:keys -- pair
 
 La clave completa se muestra solo al crearla. Guárdala en tu cliente MCP.
+Para obtener solo una clave, ejecuta npm run api:key.
 TRAZO_MCP_DATA_DIR permite elegir la carpeta privada de claves.`;
 let store;
 try {
   const { values, positionals } = parseArgs({ allowPositionals: true, options: {
-    name: { type: 'string' }, days: { type: 'string' }, id: { type: 'string' }, help: { type: 'boolean' },
+    name: { type: 'string' }, days: { type: 'string' }, id: { type: 'string' }, help: { type: 'boolean' }, plain: { type: 'boolean' },
   } });
   if (values.help || !positionals.length) console.info(help);
   else {
     const [command, ...extra] = positionals;
     if (extra.length || !['create', 'list', 'revoke', 'pair'].includes(command)) throw new Error(help);
     if ((command === 'create' && values.id) || (command === 'list' && Object.keys(values).length)
-      || (command === 'pair' && Object.keys(values).length) || (command === 'revoke' && (values.name || values.days))) throw new Error(help);
+      || (command === 'pair' && Object.keys(values).length) || (command === 'revoke' && (values.name || values.days || values.plain))) throw new Error(help);
     store = createKeyStore();
-    if (command === 'create') console.info(JSON.stringify(store.create({ name: values.name, days: values.days === undefined ? 30 : Number(values.days) }), null, 2));
+    if (command === 'create') {
+      const issued = store.create({ name: values.name, days: values.days === undefined ? 30 : Number(values.days) });
+      console.info(values.plain ? issued.key : JSON.stringify(issued, null, 2));
+    }
     if (command === 'list') console.info(JSON.stringify(store.list(), null, 2));
     if (command === 'pair') console.info(JSON.stringify(store.createPairingCode(), null, 2));
     if (command === 'revoke') { store.revoke(values.id); console.info('Clave revocada.'); }

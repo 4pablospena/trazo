@@ -20,7 +20,7 @@ export function McpClientSetup({ endpoint, token, onToken, issuedName }: { endpo
     <h3 id="mcp-client-title" className="mb-2 flex items-center gap-2 font-semibold"><Plug size={18} />3. Conecta tu IA</h3>
     <p className="muted text-sm">Elige tu cliente y copia la configuración. La clave se mantiene en memoria hasta cerrar este panel.</p>
     {issuedName && <p role="status" className="mcp-issued mt-4 rounded-lg p-3 text-sm">Clave creada: <strong>{issuedName}</strong>. Ya está preparada para copiar en la configuración.</p>}
-    <label className="mt-4 mb-2 block text-sm font-medium" htmlFor="mcp-api-key">Clave API</label>
+    <label className="mt-4 mb-2 block text-sm font-medium" htmlFor="mcp-api-key">Tu clave API</label>
     <div className="flex min-w-0 flex-wrap items-center gap-2">
       <input id="mcp-api-key" type={visible ? 'text' : 'password'} className="text-field w-full sm:w-auto sm:min-w-0 sm:flex-1 font-mono !text-sm" placeholder="Pega tu clave trazo_…" value={token} onChange={event => changeToken(event.target.value)} autoComplete="off" spellCheck={false} disabled={checking} aria-invalid={Boolean(token && !valid)} />
       <button type="button" className="icon-button" aria-label={visible ? 'Ocultar clave' : 'Mostrar clave'} disabled={!token} onClick={() => setVisible(value => !value)}>{visible ? <EyeOff size={17} /> : <Eye size={17} />}</button>

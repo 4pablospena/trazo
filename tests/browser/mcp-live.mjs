@@ -29,6 +29,8 @@ const server = createMcpServer({ enabled: true, keyStore: keys, bridge, tools: M
 const client = new Client({ name: 'Trazo live browser validation', version: '1' });
 const checks = [];
 const appUrl = process.env.TRAZO_TEST_APP_URL ?? 'http://127.0.0.1:5173/';
+const mcpPort = Number(process.env.TRAZO_TEST_MCP_PORT ?? 5174);
+const mcpEndpoint = `http://127.0.0.1:${mcpPort}`;
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 const role = (role, name) => ({ kind: 'role', role, name });
 const css = selector => ({ kind: 'css', selector });
@@ -43,16 +45,18 @@ async function call(name, args = {}) {
 }
 
 try {
-  server.listen(5174, '127.0.0.1');
+  server.listen(mcpPort, '127.0.0.1');
   await once(server, 'listening');
   const key = keys.create({ name: 'Temporary live validation' });
   const code = keys.createPairingCode().code;
-  await client.connect(new StreamableHTTPClientTransport(new URL('http://127.0.0.1:5174/mcp/'), { requestInit: { headers: { Authorization: `Bearer ${key.key}` } } }));
+  await client.connect(new StreamableHTTPClientTransport(new URL(`${mcpEndpoint}/mcp/`), { requestInit: { headers: { Authorization: `Bearer ${key.key}` } } }));
   assert.equal((await client.listTools()).tools.length, 8);
+  const inviteUrl = new URL(appUrl);
+  inviteUrl.hash = new URLSearchParams({ trazo_mcp_code: code, trazo_mcp_server: mcpEndpoint }).toString();
   const scenario = { browser: { mode: 'launch', executable_path: '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', headless: true },
-    start_url: { url: appUrl }, environment: { viewport: { width: 1440, height: 1000, device_scale_factor: 1 }, locale: 'es-ES' },
-    actions: [wait('editor-ready', 'canvas.excalidraw__canvas.interactive'), click('open-mcp', 'Conectar lienzo al MCP'),
-      fill('pair-browser', '#mcp-pair-code', code), click('authorize-browser', 'Vincular navegador'),
+    start_url: { url: inviteUrl.href }, environment: { viewport: { width: 1440, height: 1000, device_scale_factor: 1 }, locale: 'es-ES' },
+    actions: [wait('editor-ready', 'canvas.excalidraw__canvas.interactive'), wait('invite-opens-panel', '#mcp-browser-title'),
+      click('authorize-browser', 'Vincular navegador'),
       wait('bridge-connected', 'header button[data-mcp-status="connected"]'),
       fill('key-name', '#mcp-key-name', 'Cursor prueba'), click('create-client-key', 'Crear clave'),
       wait('key-issued', '#mcp-api-key[value^="trazo_"]'), click('verify-client-key', 'Comprobar conexión'),
@@ -88,7 +92,7 @@ try {
     checks.push('Browser explicitly paired through the real application');
     const uiUntil = Date.now() + 60_000;
     while (!uiKey || !keys.list().some(row => row.id === uiKey.id && row.revokedAt)) { assert.ok(Date.now() < uiUntil, 'The setup panel did not finish key management'); await pause(200); }
-    const revoked = await fetch('http://127.0.0.1:5174/mcp/', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', Authorization: `Bearer ${uiKey.key}` }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) });
+    const revoked = await fetch(`${mcpEndpoint}/mcp/`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', Authorization: `Bearer ${uiKey.key}` }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) });
     assert.equal(revoked.status, 401);
     checks.push('UI key issuance, connection check, copied configs, secret disposal and revocation');
     const created = await call('create_board', { name: 'Creado por MCP', templateId: 'flow' });

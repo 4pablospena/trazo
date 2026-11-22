@@ -288,6 +288,10 @@ test('the CLI issues once, lists metadata and revokes across separate processes'
   const keys = createKeyStore({ directory });
   try { assert.equal(keys.authenticate(issued.key), null); } finally { keys.close(); }
   assert.notEqual(run(['create', '--name', 'Bad', '--days', '0']).status, 0);
+  const plain = run(['create', '--name', 'Simple key', '--plain']);
+  assert.equal(plain.status, 0);
+  assert.match(plain.stdout, /^trazo_[A-Za-z0-9_-]{43}\n$/);
+  assert.equal(run(['list']).stdout.includes(plain.stdout.trim()), false);
 });
 
 test('the server entry point starts with environment config and stops cleanly', { timeout: 10_000 }, async () => {
