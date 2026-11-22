@@ -1,0 +1,202 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:5173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "device_scale_factor": 1
+    },
+    "locale": "es-ES",
+    "timezone": "Europe/Madrid",
+    "color_scheme": "light"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "state": "visible",
+      "timeout_ms": 60000
+    },
+    {
+      "step_id": "name-board",
+      "action": "fill",
+      "locator": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Nombre del tablero"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Prueba de guardado"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "finish-name",
+      "action": "press",
+      "locator": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Nombre del tablero"
+      },
+      "key": "Enter",
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "choose-note",
+      "action": "click",
+      "locator": {
+        "kind": "test_id",
+        "value": "toolbar-stickynote"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "insert-note",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "write-note",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "textarea.excalidraw-wysiwyg"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Mi idea se conserva"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "finish-edit",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "textarea.excalidraw-wysiwyg"
+      },
+      "key": "Escape",
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "new-board",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Nuevo tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "flow-template",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Crear tablero: Diagrama de flujo"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "ready-Diagrama-de-flujo",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Diagrama de flujo\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "render-template",
+      "action": "wait_for_timeout",
+      "duration_ms": 300
+    },
+    {
+      "step_id": "list-boards",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Abrir mis tableros"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "restore-first-board",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Abrir tablero: Prueba de guardado"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "ready-Prueba-de-guardado",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Prueba de guardado\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "reload",
+      "action": "goto",
+      "destination": {
+        "url": "http://127.0.0.1:5173/"
+      },
+      "wait_until": "load",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "restored-board",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Prueba de guardado\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "restored-render",
+      "action": "wait_for_timeout",
+      "duration_ms": 1000
+    }
+  ],
+  "capture": {
+    "at_end": [
+      "screenshot",
+      "dom",
+      "accessibility",
+      "url"
+    ],
+    "events": [
+      "page-errors",
+      "console"
+    ],
+    "after_each_step": [
+      "accessibility"
+    ]
+  }
+}

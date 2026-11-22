@@ -1,0 +1,80 @@
+<!doctype html>
+<html lang="es">
+<meta charset="utf-8" />
+<title>Pruebas de conversión de documentos</title>
+<body>
+  <h1>Pruebas de conversión de documentos</h1>
+  <pre id="test-results">Ejecutando…</pre>
+  <script type="module">
+    window.EXCALIDRAW_ASSET_PATH = '/';
+    const output = document.getElementById('test-results');
+    const results = [];
+    const assert = (condition, message) => { if (!condition) throw new Error(message); };
+    try {
+      const { convertDocument } = await import('/src/lib/convert-document.ts');
+      const { parseScene } = await import('/src/lib/scene.ts');
+      const { createBoardRepository } = await import('/src/lib/storage.ts');
+      const { getCommonBounds } = await import('@excalidraw/excalidraw');
+      const mixed = '# Importación de prueba\n\nTexto editable de introducción.\n\n```mermaid\nflowchart LR\nA[Inicio] --> B[Fin]\n```\n\n## Segundo proceso\n\n```mermaid\nflowchart TD\nA[Otro inicio] --> B[Otro fin]\n```\n\n- Tarea pendiente\n- Tarea final';
+      const converted = await convertDocument(mixed);
+      const scene = JSON.parse(converted.scene);
+      const ids = new Set(scene.elements.map(element => element.id));
+      assert(ids.size === scene.elements.length, 'Hay identificadores duplicados entre diagramas');
+      assert(converted.diagrams === 2 && converted.textBlocks >= 3, 'Se ha perdido texto o algún diagrama');
+      assert(scene.elements.filter(element => element.type === 'arrow').length === 2, 'Las flechas no son editables');
+      assert(scene.elements.some(element => element.type === 'text' && element.text.includes('introducción')), 'El texto no es editable');
+      assert(!scene.elements.some(element => element.type === 'image'), 'El flujo se convirtió en imagen');
+      for (const element of scene.elements) {
+        for (const binding of [element.startBinding, element.endBinding]) if (binding) assert(ids.has(binding.elementId), 'Una flecha perdió su enlace');
+        for (const binding of element.boundElements ?? []) assert(ids.has(binding.id), 'Se ha perdido una etiqueta enlazada');
+      }
+      const groups = new Map();
+      for (const element of scene.elements) {
+        const id = element.groupIds.at(-1);
+        if (!groups.has(id)) groups.set(id, []);
+        groups.get(id).push(element);
+      }
+      let bottom = -Infinity;
+      for (const elements of groups.values()) {
+        const [, top, , nextBottom] = getCommonBounds(elements);
+        assert(top >= bottom, 'Los bloques se solapan');
+        bottom = nextBottom;
+      }
+      results.push('Markdown mixto: texto, dos diagramas editables, IDs únicos, enlaces y disposición correctos.');
+
+      const databaseName = `trazo-conversion-test-${crypto.randomUUID()}`;
+      const store = createBoardRepository(databaseName);
+      const original = await store.create('Original', converted.scene);
+      let rejected = false;
+      try { await convertDocument('```mermaid\nflowchart LR\nA --> B\n```\n\n```mermaid\nflowchart LR\nA -->\n```'); } catch { rejected = true; }
+      assert(rejected, 'No se rechazó un segundo diagrama inválido');
+      assert((await store.list()).length === 1 && (await store.get(original.id)).scene === converted.scene, 'Un fallo cambió el tablero guardado');
+      const restored = await parseScene((await store.get(original.id)).scene);
+      assert(restored.elements.length === scene.elements.length, 'La escena perdió elementos al restaurarse');
+      results.push('Una conversión inválida no altera el tablero y la escena válida se restaura completa.');
+
+      const image = await convertDocument('pie title Reparto\n  "Equipo" : 60\n  "Otros" : 40');
+      const imageScene = JSON.parse(image.scene);
+      assert(image.imageDiagrams === 1, 'No se indicó que el diagrama usa una imagen');
+      assert(imageScene.elements.some(element => element.type === 'image' && imageScene.files[element.fileId]?.dataURL), 'Se han perdido los datos de la imagen');
+      const imageBoard = await store.create('Imagen', image.scene);
+      const imageRestored = await parseScene((await store.get(imageBoard.id)).scene);
+      assert(Object.keys(imageRestored.files ?? {}).length > 0, 'La imagen no se restaura');
+      await store.close();
+      await new Promise((resolve, reject) => { const request = indexedDB.deleteDatabase(databaseName); request.onsuccess = resolve; request.onerror = reject; });
+      results.push('Los formatos convertidos en imagen conservan sus archivos al guardarse y restaurarse.');
+
+      const cancellation = new AbortController(); cancellation.abort();
+      rejected = false;
+      try { await convertDocument('flowchart LR\nA --> B', { signal: cancellation.signal }); } catch (error) { rejected = error.name === 'AbortError'; }
+      assert(rejected, 'La cancelación se ignoró');
+      results.push('La cancelación impide completar la conversión.');
+      output.textContent = `Pruebas superadas\n${results.join('\n')}`;
+      output.dataset.status = 'passed';
+    } catch (error) {
+      output.textContent = `Prueba fallida: ${error.stack ?? error.message}`;
+      output.dataset.status = 'failed';
+    }
+  </script>
+</body>
+</html>

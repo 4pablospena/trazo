@@ -1,0 +1,81 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "device_scale_factor": 1
+    },
+    "locale": "es-ES",
+    "timezone": "Europe/Madrid",
+    "color_scheme": "light"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "state": "visible",
+      "timeout_ms": 60000
+    },
+    {
+      "step_id": "choose-template",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Nuevo tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "create-kanban",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Crear tablero: Tablero de tareas"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "kanban-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Tablero de tareas\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "final-template-render",
+      "action": "wait_for_timeout",
+      "duration_ms": 1000
+    }
+  ],
+  "capture": {
+    "at_end": [
+      "screenshot",
+      "dom",
+      "accessibility",
+      "url"
+    ],
+    "events": [
+      "page-errors",
+      "console",
+      "downloads"
+    ],
+    "after_each_step": []
+  }
+}

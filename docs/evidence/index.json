@@ -1,0 +1,340 @@
+{
+  "server": {
+    "name": "rea",
+    "version": "6.5.0"
+  },
+  "transport": "MCP stdio",
+  "primary_scenarios": [
+    "home",
+    "controls",
+    "mobile",
+    "note-edit"
+  ],
+  "verified_artifacts": 59,
+  "records": [
+    {
+      "name": "home",
+      "evidence_id": "ev_80c9c61fc72fdbcd3737e72df7f04c03232c16aed85ac432e5d68087191c1023",
+      "operation": "capture_browser_scenario",
+      "status": "complete",
+      "archive": "home.evidence.json.gz",
+      "json_sha256": "1003ff0d669c2e8b839c20cf9f02ad59ced4aea9dbf472b6d6367cd890615778",
+      "compressed_sha256": "739e25cd6095b74ce2304ba54c38a6fa231944bdfcc0847e03e589abcc321874",
+      "bytes": 160898,
+      "compressed_bytes": 86121,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "initial-render",
+          "status": "completed"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "screenshot": "excalidraw-home.png"
+    },
+    {
+      "name": "controls",
+      "evidence_id": "ev_c78f87980ff1b06d9909b67a8bf1145822af2d440b1020883fc1b92aa0d37ce6",
+      "operation": "capture_browser_scenario",
+      "status": "complete",
+      "archive": "controls.evidence.json.gz",
+      "json_sha256": "660976d43df6d43a28eac4a411781442c516124ca298d99d4dd9d4df9a6ef3de",
+      "compressed_sha256": "cde75b1b0bc4d0d67a1b4850c5c9da16c2a88507c1f8200d78f4a03bdaf2a9cf",
+      "bytes": 536831,
+      "compressed_bytes": 160174,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "rectangle-properties",
+          "status": "completed"
+        },
+        {
+          "id": "main-menu",
+          "status": "completed"
+        },
+        {
+          "id": "close-menu",
+          "status": "completed"
+        },
+        {
+          "id": "open-library",
+          "status": "completed"
+        },
+        {
+          "id": "close-library",
+          "status": "completed"
+        },
+        {
+          "id": "extra-tools",
+          "status": "completed"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "screenshot": "excalidraw-controls.png"
+    },
+    {
+      "name": "mobile",
+      "evidence_id": "ev_a3ce69567600a79cc8c1e086a915caa72fb78cfc2655d13d5b530387a85368a6",
+      "operation": "capture_browser_scenario",
+      "status": "complete",
+      "archive": "mobile.evidence.json.gz",
+      "json_sha256": "08e92e19bac1331d6bcc8aeec10823d4117c73b64f96f450c56602ddcc54bc8f",
+      "compressed_sha256": "4f67cc06d30c90e41ff864d439d746776370429ce0f65c1652894697bbf89de8",
+      "bytes": 99394,
+      "compressed_bytes": 48773,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "mobile-editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "mobile-render",
+          "status": "completed"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "screenshot": "excalidraw-mobile.png"
+    },
+    {
+      "name": "note-edit",
+      "evidence_id": "ev_ec8ebfd7761fcc88c32f7c265180bee00b6c3ac159cd92f76fdc0c3f06846664",
+      "operation": "capture_browser_scenario",
+      "status": "complete",
+      "archive": "note-edit.evidence.json.gz",
+      "json_sha256": "9416a00ee8583af31f1f22e0f4985b97e80624f36748ce59e567b4ffbdd9da8a",
+      "compressed_sha256": "cd1a22d88118b003230b382a1e75075911ebd5cdcf3d079a29ef244580b92016",
+      "bytes": 671373,
+      "compressed_bytes": 424010,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "choose-note",
+          "status": "completed"
+        },
+        {
+          "id": "insert-note",
+          "status": "completed"
+        },
+        {
+          "id": "write-note",
+          "status": "completed"
+        },
+        {
+          "id": "finish-edit",
+          "status": "completed"
+        },
+        {
+          "id": "undo",
+          "status": "completed"
+        },
+        {
+          "id": "redo",
+          "status": "completed"
+        },
+        {
+          "id": "show-minimap",
+          "status": "completed"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ],
+      "screenshot": "excalidraw-note-edit.png"
+    },
+    {
+      "name": "note-editor-probe",
+      "evidence_id": "ev_54c099210da4c35edb27de24ad25a5af18c7cee94c218a01bcb8274b59612bca",
+      "operation": "capture_browser_scenario",
+      "status": "complete",
+      "archive": "note-editor-probe.evidence.json.gz",
+      "json_sha256": "6e1029262bcafb24de72e4c9d68bcbe2bfb5c7cd32168886f6d58dcaea2f5e2f",
+      "compressed_sha256": "c296f90229a1e46dbe7a5642e681a9132a396b989cb2830b098fb2f33e037bf5",
+      "bytes": 111607,
+      "compressed_bytes": 47903,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "choose-note",
+          "status": "completed"
+        },
+        {
+          "id": "insert-note",
+          "status": "completed"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ]
+    },
+    {
+      "name": "home-selector-attempt",
+      "evidence_id": "ev_24a018731b19c5c41ff13d4fa162c3ac25a66d3ea2942172fe8d38208fc82fda",
+      "operation": "capture_browser_scenario",
+      "status": "incomplete",
+      "archive": "home-selector-attempt.evidence.json.gz",
+      "json_sha256": "97255c412cc66c09e7a58475c4711ca941c2f5a29253d29f3334978b28aa6804",
+      "compressed_sha256": "e057d4607664abfd455f96f20df438d6e408db3b34af2e26cbe52b80352a95be",
+      "bytes": 9401,
+      "compressed_bytes": 2182,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "failed"
+        },
+        {
+          "id": "initial-render",
+          "status": "cancelled"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ]
+    },
+    {
+      "name": "library-close-attempt",
+      "evidence_id": "ev_be2a31b6d540e40710bf8e5e79ca813ffa9c74c8c1f44dabf266a59170d87806",
+      "operation": "capture_browser_scenario",
+      "status": "incomplete",
+      "archive": "library-close-attempt.evidence.json.gz",
+      "json_sha256": "b97b8c0f36a1cc16605683678311ff6dd435e5a381777629dae43cd6f8f0253d",
+      "compressed_sha256": "6da3f26975b4e4221bc912fb0291c94d26319917d204fc13ea5df46176e6ca19",
+      "bytes": 413435,
+      "compressed_bytes": 96461,
+      "cleanup": "terminated-owned-process",
+      "steps": [
+        {
+          "id": "scenario_start",
+          "status": "completed"
+        },
+        {
+          "id": "editor-ready",
+          "status": "completed"
+        },
+        {
+          "id": "rectangle-properties",
+          "status": "completed"
+        },
+        {
+          "id": "main-menu",
+          "status": "completed"
+        },
+        {
+          "id": "close-menu",
+          "status": "completed"
+        },
+        {
+          "id": "open-library",
+          "status": "completed"
+        },
+        {
+          "id": "close-library",
+          "status": "failed"
+        },
+        {
+          "id": "extra-tools",
+          "status": "cancelled"
+        }
+      ],
+      "limitations": [
+        "Artifact identity is unavailable for this observation.",
+        "Event sequence records provider receipt order; simultaneous browser causality is not inferred.",
+        "Network content is retained only when selected; Playwright response-body bytes are API results and are not guaranteed to match wire bytes.",
+        "Request bytes are limited to what Playwright exposes; not_exposed does not establish body absence or multipart file coverage.",
+        "Network content reads settle within 5 seconds each and the observer does not request bodies from unfinished responses.",
+        "Playwright scenario events do not expose request initiator stacks; receipt order does not prove causality.",
+        "Storage values are hashed only after declared-secret redaction.",
+        "Browser host platform and architecture were not observed."
+      ]
+    }
+  ]
+}

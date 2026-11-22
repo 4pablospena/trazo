@@ -1,0 +1,166 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:5173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 1440,
+      "height": 1000,
+      "device_scale_factor": 1
+    },
+    "locale": "es-ES"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "open-converter",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "header button[aria-label=\"Convertir Mermaid o Markdown\"]"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "invalid-diagram",
+      "action": "fill",
+      "locator": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Contenido Mermaid o Markdown"
+      },
+      "value": {
+        "source": "literal",
+        "value": "flowchart LR\nA -->"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "convert-invalid",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Convertir a lienzo"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "validation-error",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "#document-import-error"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "mixed-document",
+      "action": "fill",
+      "locator": {
+        "kind": "role",
+        "role": "textbox",
+        "name": "Contenido Mermaid o Markdown"
+      },
+      "value": {
+        "source": "literal",
+        "value": "# Plan de prueba\n\nNotas convertidas en tarjetas editables.\n\n```mermaid\nflowchart LR\nA[Inicio] --> B[Terminado]\n```"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "convert-document",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Convertir a lienzo"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "preview-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "img[alt=\"Vista previa de la conversi\u00f3n\"]"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "create-board",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Crear tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "converted-board",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Plan de prueba\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "reload",
+      "action": "goto",
+      "destination": {
+        "url": "http://127.0.0.1:5173/"
+      },
+      "wait_until": "load",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "restored-board",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Plan de prueba\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "final-render",
+      "action": "wait_for_timeout",
+      "duration_ms": 1000
+    }
+  ],
+  "capture": {
+    "after_each_step": [
+      "accessibility",
+      "screenshot"
+    ],
+    "at_end": [
+      "dom",
+      "accessibility",
+      "screenshot"
+    ],
+    "events": [
+      "page-errors",
+      "console"
+    ]
+  }
+}

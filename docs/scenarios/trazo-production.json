@@ -1,0 +1,286 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "http://127.0.0.1:4173/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "device_scale_factor": 1
+    },
+    "locale": "es-ES",
+    "timezone": "Europe/Madrid",
+    "color_scheme": "light"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "state": "visible",
+      "timeout_ms": 60000
+    },
+    {
+      "step_id": "choose-template",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Nuevo tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "create-kanban",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Crear tablero: Tablero de tareas"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "kanban-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Tablero de tareas\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "open-boards",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Abrir mis tableros"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "board-options",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Opciones de Tablero de tareas"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "duplicate",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Duplicar"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Tablero de tareas (copia)\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "list-copy",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Abrir mis tableros"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "copy-options",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Opciones de Tablero de tareas (copia)"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "rename-copy",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Cambiar nombre"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "new-name",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "#rename-board"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Plan revisado"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "save-name",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Guardar nombre"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "renamed-options",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Opciones de Plan revisado"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "delete-copy",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Eliminar"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "confirm-delete",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Eliminar tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "original-restored",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "input[aria-label=\"Nombre del tablero\"][value=\"Tablero de tareas\"]:not([disabled])"
+      },
+      "state": "visible",
+      "timeout_ms": 15000
+    },
+    {
+      "step_id": "export-json-menu",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Exportar tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "download-json",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Archivo Excalidraw Editable"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "json-download",
+      "action": "wait_for_timeout",
+      "duration_ms": 200
+    },
+    {
+      "step_id": "export-png-menu",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Exportar tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "download-png",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Imagen PNG"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "png-download",
+      "action": "wait_for_timeout",
+      "duration_ms": 2000
+    },
+    {
+      "step_id": "export-svg-menu",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "button",
+        "name": "Exportar tablero"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "download-svg",
+      "action": "click",
+      "locator": {
+        "kind": "role",
+        "role": "menuitem",
+        "name": "Vector SVG"
+      },
+      "timeout_ms": 10000
+    },
+    {
+      "step_id": "svg-download",
+      "action": "wait_for_timeout",
+      "duration_ms": 1000
+    }
+  ],
+  "capture": {
+    "at_end": [
+      "screenshot",
+      "dom",
+      "accessibility",
+      "url"
+    ],
+    "events": [
+      "page-errors",
+      "console",
+      "downloads"
+    ],
+    "after_each_step": [
+      "accessibility"
+    ]
+  }
+}

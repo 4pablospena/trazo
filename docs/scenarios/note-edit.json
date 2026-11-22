@@ -1,0 +1,115 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": {
+    "url": "https://excalidraw.com/"
+  },
+  "environment": {
+    "viewport": {
+      "width": 1440,
+      "height": 900,
+      "device_scale_factor": 1
+    },
+    "locale": "es-ES",
+    "timezone": "Europe/Madrid",
+    "color_scheme": "light"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    {
+      "step_id": "choose-note",
+      "action": "click",
+      "locator": {
+        "kind": "test_id",
+        "value": "toolbar-stickynote"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "insert-note",
+      "action": "click",
+      "locator": {
+        "kind": "css",
+        "selector": "canvas.excalidraw__canvas.interactive"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "write-note",
+      "action": "fill",
+      "locator": {
+        "kind": "css",
+        "selector": "textarea.excalidraw-wysiwyg"
+      },
+      "value": {
+        "source": "literal",
+        "value": "Prueba de referencia REA"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "finish-edit",
+      "action": "press",
+      "locator": {
+        "kind": "css",
+        "selector": "textarea.excalidraw-wysiwyg"
+      },
+      "key": "Escape",
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "undo",
+      "action": "click",
+      "locator": {
+        "kind": "test_id",
+        "value": "button-undo"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "redo",
+      "action": "click",
+      "locator": {
+        "kind": "test_id",
+        "value": "button-redo"
+      },
+      "timeout_ms": 5000
+    },
+    {
+      "step_id": "show-minimap",
+      "action": "click",
+      "locator": {
+        "kind": "test_id",
+        "value": "button-minimap"
+      },
+      "timeout_ms": 5000
+    }
+  ],
+  "capture": {
+    "at_end": [
+      "screenshot",
+      "dom",
+      "accessibility",
+      "url"
+    ],
+    "events": [
+      "page-errors"
+    ],
+    "after_each_step": [
+      "screenshot",
+      "accessibility"
+    ]
+  }
+}

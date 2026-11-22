@@ -1,0 +1,43 @@
+[
+  {
+    "name": "workspace",
+    "evidence_id": "ev_9a20959b2c9d9417d9ed7100582f3deae521dc1fb2930e45738a930aa073a35a",
+    "archive": "docs/evidence/trazo-workspace.evidence.json.gz",
+    "sha256": "93bacf3743f299e87db4a785c98557477f0832ff8d11ab7c4ee2c69faa772269",
+    "complete": true,
+    "cleanup": "terminated-owned-process",
+    "page_errors": 0
+  },
+  {
+    "name": "mobile",
+    "evidence_id": "ev_af3a5fd31e696582fdf091caee32caad1e87dbf62cf55a29d83d8ded3409f545",
+    "archive": "docs/evidence/trazo-mobile.evidence.json.gz",
+    "sha256": "928d479bad948757b136b149460ac49e4952302e166d720f42ffe890a1b539db",
+    "complete": true,
+    "cleanup": "terminated-owned-process",
+    "page_errors": 0
+  },
+  {
+    "name": "production",
+    "evidence_id": "ev_5b52523a0cc9dc4858c589c603b86e12fd98ebec23621568c9555e873e390485",
+    "archive": "docs/evidence/trazo-production.evidence.json.gz",
+    "sha256": "4f73b919b525decef3b337fb01d95a4f3e6315dda4fda8fb80f44b176e02df0c",
+    "complete": true,
+    "cleanup": "terminated-owned-process",
+    "page_errors": 0,
+    "downloads": [
+      "Tablero de tareas.excalidraw",
+      "Tablero de tareas.png",
+      "Tablero de tareas.svg"
+    ]
+  },
+  {
+    "name": "template-final",
+    "evidence_id": "ev_f799af360dc1555738fc2880306b6c8d770929c0497e9fb42ca3c05fba9ca8ee",
+    "archive": "docs/evidence/trazo-template-final.evidence.json.gz",
+    "sha256": "4dbe7a9e23e9d2af435c133c17be1940a3c8f0a22ef802944b008700d0c1e171",
+    "complete": true,
+    "cleanup": "terminated-owned-process",
+    "page_errors": 0
+  }
+]
