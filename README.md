@@ -66,7 +66,7 @@ Si falla el guardado, se muestra un aviso con las acciones de reintentar y desca
 
 ## MCP local — servidor y herramientas
 
-El servidor utiliza el mismo patrón HTTP de Mochi y Resizes.ai: `/mcp` y `/mcp/`, clave en `Authorization: Bearer`, protocolo sin sesiones y claves revocables. Las ocho herramientas trabajan sobre los tableros reales del navegador vinculado. El botón **MCP** de la barra superior permite vincular y desconectar el lienzo. El panel con configuraciones copiables para Cursor, Claude Code y Codex llegará en la tercera fase.
+El servidor utiliza el mismo patrón HTTP de Mochi y Resizes.ai: `/mcp` y `/mcp/`, clave en `Authorization: Bearer`, protocolo sin sesiones y claves revocables. Las ocho herramientas trabajan sobre los tableros reales del navegador vinculado. El botón **MCP** de la barra superior permite vincular y desconectar el lienzo. El mismo panel permite crear y revocar claves, copiar la URL y generar las configuraciones de Cursor, Claude Code y Codex.
 
 Requiere Node.js 24. El servidor escucha únicamente en `127.0.0.1:5174`, independientemente del editor en el puerto 5173. Para activarlo en otra terminal:
 
@@ -84,7 +84,7 @@ npm run mcp:keys -- list
 npm run mcp:keys -- revoke --id IDENTIFICADOR
 ```
 
-La creación devuelve el secreto una sola vez. `list` muestra identificadores y metadatos; no permite recuperar el secreto. Cada clave dura de 1 a 365 días y hay un límite de 20 claves activas. La revocación se aplica a la siguiente solicitud, sin reiniciar el servidor. El acceso a la terminal y a la carpeta privada del usuario administra las claves; el servidor HTTP no expone una ruta pública para crearlas.
+La creación devuelve el secreto una sola vez. `list` muestra identificadores y metadatos; no permite recuperar el secreto. Cada clave dura de 1 a 365 días y hay un límite de 20 claves activas. La revocación se aplica a la siguiente solicitud, sin reiniciar el servidor. El acceso a la terminal y a la carpeta privada del usuario administra las claves. El navegador vinculado también puede crearlas, listarlas y revocarlas mediante su credencial privada. Una clave de un cliente MCP no autoriza esa gestión.
 
 ### Vincular el navegador
 
@@ -99,6 +99,26 @@ Pulsa **MCP** en la barra superior, pega el campo `code` en **Código de vincula
 El código de vinculación y las claves API cumplen funciones distintas. El navegador obtiene una credencial propia; una clave de una IA no puede hacerse pasar por el editor. El servidor conserva solo hashes de los códigos y de las credenciales del enlace. La credencial del navegador se conserva en `sessionStorage` de esa pestaña, dura ocho horas y permite reconectar tras una recarga. La reconexión puede tardar 15 segundos al liberar la reserva de la pestaña anterior. Si el servidor se reinicia, genera otro código y vuelve a vincular.
 
 Mantén la pestaña abierta. Se admite un navegador vinculado y una pestaña ejecutora a la vez. **Desconectar este navegador** corta el enlace, sin eliminar tableros ni revocar las claves de los clientes. Si cierras Trazo, las herramientas devuelven un error de conexión en lugar de anunciar cambios guardados.
+
+### Configurar Cursor, Claude Code y Codex
+
+Después de vincular, usa **Crea una clave para tu IA**. Elige un nombre y caducidad y pulsa **Crear clave**. La clave pasa directamente al apartado **Conecta tu IA**. También puedes pegar una clave existente.
+
+Elige la pestaña de tu cliente y pulsa **Copiar configuración**:
+
+- **Cursor**: añade el bloque `trazo` a `mcpServers` en `~/.cursor/mcp.json` y recarga los MCP.
+- **Claude Code**: añade el bloque a `.mcp.json` en tu proyecto, o despliega **Usar la terminal** para copiar `claude mcp add --transport http`. Revisa `/mcp` en Claude Code.
+- **Codex**: añade el bloque `[mcp_servers.trazo]` a `~/.codex/config.toml` y abre un chat nuevo. El bloque usa `http_headers`, válido para la app de escritorio y el CLI. La alternativa de terminal usa `TRAZO_API_KEY`; para esa alternativa, inicia el CLI de Codex desde la misma terminal que exporta la variable.
+
+Conserva los demás servidores que ya tengas al añadir el bloque. Las configuraciones de proyecto `.mcp.json` y `.cursor/mcp.json` se ignoran en este repositorio para evitar versionar claves.
+
+La vista previa oculta la clave por defecto; los botones de copia incluyen la clave completa. **Mostrar clave** la muestra también en los bloques. La clave API permanece solo en la memoria del panel y se borra de esa memoria al cerrarlo. La credencial del enlace del navegador sigue en `sessionStorage` para mantener la conexión. Las claves emitidas no se pueden recuperar desde el servidor: si pierdes una, revócala y crea otra.
+
+**Comprobar conexión** valida la clave, consulta el catálogo y llama a `list_boards` sobre el lienzo vinculado. El resultado confirma el acceso al servidor y al navegador; después debes añadir la configuración a tu cliente. Para probarlo, pide a tu IA: «Usa Trazo para crear un diagrama Mermaid de un proceso de aprobación».
+
+La lista de claves muestra su caducidad y permite **Revocar → Confirmar revocación**. Las llamadas posteriores con esa clave se rechazan inmediatamente. La revocación no borra dibujos ni desconecta el navegador.
+
+Referencias de configuración: [Cursor](https://cursor.com/docs/mcp), [Claude Code](https://code.claude.com/docs/en/mcp) y [Codex](https://learn.chatgpt.com/docs/extend/mcp?surface=cli). La integración es local para Cursor, Claude Code y Codex; `claude.ai` requiere una integración remota adicional.
 
 ### Herramientas
 
@@ -116,7 +136,7 @@ El límite es de 20 comandos en espera, 90 segundos por comando, 5000 elementos 
 
 Las claves se guardan como SHA-256 de un secreto aleatorio de 256 bits en `keys.sqlite`. En macOS, la carpeta predeterminada es `~/Library/Application Support/Trazo/mcp/`; en otros sistemas se utiliza `$XDG_DATA_HOME/Trazo/mcp/` o `~/.local/share/Trazo/mcp/`. `TRAZO_MCP_DATA_DIR` permite cambiarla, tanto al arrancar como al gestionar claves. La carpeta debe tener permisos 700 y el archivo 600. No se admiten enlaces simbólicos para la carpeta final ni el archivo. Las claves no se guardan en los tableros ni en el repositorio.
 
-La URL para los clientes es `http://127.0.0.1:5174/mcp/`. Envía la clave como `Authorization: Bearer trazo_…`. El servidor ignora cookies de sesión, valida `Host` y `Origin`, limita los mensajes a 1 MB y bloquea durante el resto de la ventana de un minuto tras cinco intentos fallidos. Solo permite los orígenes locales de Trazo en los puertos 5173 y 4173, además de su propio origen. Las configuraciones copiables para cada IA se añadirán con el panel.
+La URL para los clientes es `http://127.0.0.1:5174/mcp/`. Envía la clave como `Authorization: Bearer trazo_…`. El servidor ignora cookies de sesión, valida `Host` y `Origin`, limita los mensajes a 1 MB y bloquea durante el resto de la ventana de un minuto tras cinco intentos fallidos. Solo permite los orígenes locales de Trazo en los puertos 5173 y 4173, además de su propio origen. Las configuraciones copiables se generan en el panel MCP para la dirección local elegida.
 
 El transporte responde con JSON y admite las versiones `2025-03-26` y `2025-06-18`. Una versión de inicialización desconocida negocia `2025-06-18`; una cabecera `MCP-Protocol-Version` no admitida se rechaza. Las notificaciones devuelven 202 sin cuerpo, `GET` devuelve 405 porque no se ofrecen eventos SSE y `DELETE` autenticado es una operación vacía. No acepta lotes JSON-RPC. [Especificación del transporte MCP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
 

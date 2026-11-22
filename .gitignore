@@ -13,3 +13,6 @@ test-results/
 *.sqlite
 *.sqlite-shm
 *.sqlite-wal
+
+.mcp.json
+.cursor/mcp.json

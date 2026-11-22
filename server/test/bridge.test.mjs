@@ -133,3 +133,32 @@ test('real MCP HTTP calls wait for an authorized browser result; bridge routes r
     assert.match(disconnected.content[0].text, /no está conectado/);
   } finally { await client.close(); }
 });
+
+test('only a paired browser can issue, list and revoke client keys', async () => {
+  const { keys, bridge } = fixture();
+  const apiKey = keys.create({ name: 'Existing client' });
+  const server = createMcpServer({ keyStore: keys, enabled: true, bridge });
+  server.listen(0, '127.0.0.1'); await once(server, 'listening');
+  cleanup.push(() => new Promise(resolve => { server.close(resolve); server.closeAllConnections(); }));
+  const endpoint = `http://127.0.0.1:${server.address().port}`;
+  const post = (path, body, token, origin = 'http://127.0.0.1:5173') => fetch(`${endpoint}/bridge/${path}`, { method: 'POST', headers: {
+    'Content-Type': 'application/json', ...(origin ? { Origin: origin } : {}), ...(token ? { Authorization: `Bearer ${token}` } : {}),
+  }, body: JSON.stringify(body) });
+  assert.equal((await post('keys/create', { name: 'Attack', days: 30 }, apiKey.key)).status, 401);
+  assert.equal((await post('keys/list', {}, undefined)).status, 401);
+  const session = await (await post('connect', { code: keys.createPairingCode().code, workspaceId: workspace })).json();
+  assert.equal((await post('keys/create', { name: 'Invalid', days: 0 }, session.token)).status, 400);
+  assert.equal((await post('keys/list', {}, session.token, 'https://other.example')).status, 403);
+  assert.equal((await post('keys/list', {}, session.token, null)).status, 403);
+  const issued = await (await post('keys/create', { name: 'New client', days: 7 }, session.token)).json();
+  assert.ok(keys.authenticate(issued.key));
+  const list = await (await post('keys/list', {}, session.token)).json();
+  assert.equal(JSON.stringify(list).includes(issued.key), false);
+  assert.equal(JSON.stringify(list).includes('key_hash'), false);
+  assert.ok(list.keys.some(row => row.id === issued.id));
+  assert.equal((await post('keys/revoke', { id: issued.id }, apiKey.key)).status, 401);
+  assert.equal((await post('keys/revoke', { id: issued.id }, session.token)).status, 200);
+  assert.equal(keys.authenticate(issued.key), null);
+  await post('disconnect', { consumerId: consumer }, session.token);
+  assert.equal((await post('keys/list', {}, session.token)).status, 401);
+});

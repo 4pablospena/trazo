@@ -51,6 +51,15 @@ button { cursor: pointer; }
 button:disabled { cursor: default; opacity: .55; }
 button:focus-visible, input:focus-visible, a:focus-visible { outline: 2px solid var(--primary); outline-offset: 3px; }
 .muted { color: var(--muted); }
+.mcp-card { min-width: 0; border: 1px solid var(--border); border-radius: 12px; padding: 20px; background: var(--surface); }
+.mcp-url, .mcp-issued { background: var(--selected); border: 1px solid var(--selected-border); }
+.mcp-command-row { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 8px; padding: 10px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-subtle); }
+.mcp-command-row code { overflow-wrap: anywhere; font-size: 12px; }
+.mcp-tabs, .mcp-snippet { background: var(--surface-subtle); }
+.mcp-tabs button[data-selected] { background: var(--surface); color: var(--primary); }
+.mcp-snippet { border: 1px solid var(--border); }
+.mcp-status { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; color: var(--muted); }
+.mcp-status[data-status='connected'] { color: var(--primary); }
 .ink { color: var(--ink); }
 .brand-word { font-size: 26px; font-weight: 700; letter-spacing: -.8px; line-height: 1; color: var(--ink); }
 .app-header { z-index: 30; background: var(--surface); border-bottom: 1px solid var(--border); }

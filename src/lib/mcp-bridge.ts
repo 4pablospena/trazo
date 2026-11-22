@@ -5,7 +5,7 @@ const STORAGE_KEY = 'trazo.mcp.connection';
 
 export function localEndpoint(input: string): string {
   const url = new URL(input);
-  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) || url.username || url.password || url.search || url.hash || url.pathname !== '/') throw new Error('Usa la dirección HTTP local del servidor, por ejemplo http://127.0.0.1:5174.');
+  if (url.protocol !== 'http:' || !['127.0.0.1', 'localhost', '[::1]'].includes(url.hostname) || url.username || url.password || url.search || url.hash || !['/', '/mcp', '/mcp/'].includes(url.pathname)) throw new Error('Usa la dirección HTTP local del servidor, por ejemplo http://127.0.0.1:5174.');
   return url.origin;
 }
 
@@ -18,6 +18,36 @@ async function post(endpoint: string, path: string, body: unknown, token?: strin
   catch { throw new Error(response.status === 404 ? 'El MCP no está activado en ese servidor. Arráncalo con MCP_ENABLED=true.' : 'El servidor no devolvió una respuesta MCP válida.'); }
   if (!response.ok) throw Object.assign(new Error(typeof value.error === 'string' ? value.error : 'No se pudo conectar con el MCP.'), { status: response.status });
   return value;
+}
+
+export interface ApiKeyMetadata { id: string; name: string; prefix: string; createdAt: number; expiresAt: number; revokedAt: number | null; lastUsedAt: number | null }
+export interface IssuedApiKey extends ApiKeyMetadata { key: string }
+export async function manageApiKeys(connection: BridgeConnection, operation: 'list' | 'create' | 'revoke', args: Record<string, unknown> = {}, signal?: AbortSignal): Promise<Record<string, unknown>> {
+  return post(connection.endpoint, `keys/${operation}`, args, connection.token, signal ?? AbortSignal.timeout(10_000));
+}
+
+export async function verifyMcp(endpoint: string, key: string): Promise<number> {
+  endpoint = localEndpoint(endpoint);
+  const request = async (body: Record<string, unknown>) => {
+    const response = await fetch(`${endpoint}/mcp/`, { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', 'MCP-Protocol-Version': '2025-06-18', Authorization: `Bearer ${key}` },
+      body: JSON.stringify(body), credentials: 'omit', redirect: 'error', signal: AbortSignal.timeout(15_000) });
+    if (response.status === 202) return {};
+    if (!response.ok) throw new Error(response.status === 401 ? 'La clave no es válida, ha caducado o se ha revocado.' : response.status === 429 ? 'Demasiados intentos. Espera un minuto antes de comprobar otra vez.' : 'No se pudo acceder al servidor MCP. Comprueba que esté activado.');
+    const value = await response.json() as { error?: unknown; result?: Record<string, unknown> };
+    if (value.error) throw new Error('El servidor rechazó la comprobación MCP.');
+    if (!value.result || typeof value.result !== 'object') throw new Error('El servidor no devolvió una respuesta MCP válida.');
+    return value.result;
+  };
+  await request({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18', capabilities: {}, clientInfo: { name: 'Trazo connection setup', version: '1' } } });
+  await request({ jsonrpc: '2.0', method: 'notifications/initialized' });
+  const catalog = await request({ jsonrpc: '2.0', id: 2, method: 'tools/list' });
+  const result = await request({ jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'list_boards', arguments: {} } });
+  if (result.isError) {
+    const content = Array.isArray(result.content) ? result.content[0] as { text?: unknown } : undefined;
+    throw new Error(typeof content?.text === 'string' ? content.text : 'El lienzo no está conectado.');
+  }
+  if (!Array.isArray(catalog.tools)) throw new Error('El servidor no devolvió su catálogo de herramientas.');
+  return catalog.tools.length;
 }
 
 export async function pairBridge(endpoint: string, code: string, workspaceId: string): Promise<BridgeConnection> {
@@ -57,8 +87,14 @@ export function startBridge(connection: BridgeConnection, execute: (command: Bri
         onStatus('connecting');
         heartbeat = setInterval(() => { void post(connection.endpoint, 'heartbeat', { consumerId }, connection.token, abort.signal).catch(() => undefined); }, 5000);
         let failures = 0;
+        let verified = false;
         while (!abort.signal.aborted) {
           try {
+            if (!verified) {
+              await post(connection.endpoint, 'heartbeat', { consumerId }, connection.token, abort.signal);
+              verified = true;
+              onStatus('connected');
+            }
             const response = await post(connection.endpoint, 'poll', { consumerId }, connection.token, abort.signal);
             failures = 0;
             onStatus('connected');
@@ -78,6 +114,7 @@ export function startBridge(connection: BridgeConnection, execute: (command: Bri
             if (abort.signal.aborted) break;
             if (cause && typeof cause === 'object' && 'status' in cause && cause.status === 401) { forgetBridge(); throw cause; }
             if (++failures > 20) throw cause;
+            verified = false;
             onStatus('connecting', cause instanceof Error ? cause.message : 'Reconectando con el MCP…');
             await pause(1000);
           }

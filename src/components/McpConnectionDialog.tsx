@@ -1,31 +1,37 @@
 import { useState } from 'react';
-import { Link2, LoaderCircle } from 'lucide-react';
 import { Modal } from './Modal';
 import type { useMcpConnection } from '../useMcpConnection';
+import { useMcpKeys } from '../useMcpKeys';
+import { localEndpoint } from '../lib/mcp-bridge';
+import { McpCopyButton } from './McpCopyButton';
+import { McpBrowserConnection } from './McpBrowserConnection';
+import { McpApiKeys } from './McpApiKeys';
+import { McpClientSetup } from './McpClientSetup';
+
+function McpSetup({ mcp }: { mcp: ReturnType<typeof useMcpConnection> }) {
+  const [endpoint, setEndpoint] = useState(mcp.connection?.endpoint ?? 'http://127.0.0.1:5174');
+  const [token, setToken] = useState('');
+  const [issuedName, setIssuedName] = useState('');
+  const keys = useMcpKeys(mcp.connection);
+  const address = mcp.connection?.endpoint ?? endpoint;
+  let url = '';
+  try { url = `${localEndpoint(address)}/mcp/`; } catch { /* Validated on form submission. */ }
+  return <>
+    <div className="mcp-url mb-5 flex flex-wrap items-center justify-between gap-3 rounded-xl p-4"><div className="min-w-0"><p className="muted mb-1 text-xs font-medium">URL para tus clientes MCP</p><code className="break-all text-sm">{url || 'Indica un servidor local válido'}</code></div><McpCopyButton value={url} label="Copiar URL" disabled={!url} /></div>
+    <div className="grid min-w-0 items-start gap-5 lg:grid-cols-2">
+      <div className="min-w-0 space-y-5">
+        <McpBrowserConnection mcp={mcp} endpoint={endpoint} onEndpoint={value => { setEndpoint(value); setToken(''); setIssuedName(''); }} locked={keys.busy} />
+        <McpApiKeys keys={keys} connected={Boolean(mcp.connection) && mcp.status === 'connected'} onIssued={key => { setToken(key.key); setIssuedName(key.name); }}
+          onRevoked={row => { if (token.startsWith(row.prefix)) { setToken(''); setIssuedName(''); } }} />
+      </div>
+      <div className="min-w-0"><McpClientSetup endpoint={address} token={token} onToken={value => { setToken(value); setIssuedName(''); }} issuedName={issuedName} /></div>
+    </div>
+  </>;
+}
 
 export function McpConnectionDialog({ open, onClose, mcp }: { open: boolean; onClose: () => void; mcp: ReturnType<typeof useMcpConnection> }) {
-  const [endpoint, setEndpoint] = useState('http://127.0.0.1:5174');
-  const [code, setCode] = useState('');
-  const [working, setWorking] = useState(false);
-  const [error, setError] = useState('');
-  return <Modal open={open} onClose={onClose} title="Conectar lienzo al MCP" description="Autoriza a tus clientes MCP a trabajar sobre los tableros de este navegador. Mantén Trazo abierto mientras los utilizas.">
-    {mcp.connection ? <div className="space-y-4">
-      <p role="status">{mcp.status === 'connected' ? 'Lienzo conectado' : mcp.status === 'connecting' ? 'Conectando con el servidor…' : 'Enlace desconectado'}</p>
-      <p className="muted break-all text-sm">{mcp.connection.endpoint}/mcp/</p>
-      {mcp.error && <p role="alert" className="danger-text text-sm">{mcp.error}</p>}
-      <button className="secondary-button" onClick={() => { void mcp.disconnect().catch(cause => setError(cause instanceof Error ? cause.message : 'No se pudo avisar al servidor.')); }}>Desconectar este navegador</button>
-    </div> : <form className="space-y-4" onSubmit={event => {
-      event.preventDefault(); setWorking(true); setError('');
-      void mcp.connect(endpoint, code).then(() => setCode('')).catch(cause => setError(cause instanceof Error ? cause.message : 'No se pudo conectar.')).finally(() => setWorking(false));
-    }}>
-      <p className="muted text-sm">Arranca el servidor con <code>MCP_ENABLED=true npm run mcp</code>. Después genera un código de un solo uso con <code>npm run mcp:keys -- pair</code>.</p>
-      <label className="block text-sm font-medium" htmlFor="mcp-endpoint">Servidor local</label>
-      <input id="mcp-endpoint" className="text-field w-full" value={endpoint} onChange={event => setEndpoint(event.target.value)} disabled={working} required />
-      <label className="block text-sm font-medium" htmlFor="mcp-pair-code">Código de vinculación</label>
-      <input id="mcp-pair-code" type="password" className="text-field w-full font-mono" value={code} onChange={event => setCode(event.target.value)} disabled={working} autoComplete="off" spellCheck={false} placeholder="trazo_pair_…" required />
-      <p className="muted text-sm">Este código autoriza el enlace con tus tableros. Las claves de las IA se generan por separado y se pueden revocar desde la terminal.</p>
-      <button className="primary-button" disabled={working || !code.trim()}>{working ? <LoaderCircle size={16} className="animate-spin" /> : <Link2 size={16} />}Vincular navegador</button>
-    </form>}
-    {error && <p className="danger-text mt-4 text-sm" role="alert">{error}</p>}
+  return <Modal open={open} onClose={onClose} title="Conecta tus IA a Trazo" maxWidth="70rem"
+    description="Configura Cursor, Claude Code o Codex para crear y editar tus dibujos. El servidor y esta pestaña deben permanecer abiertos.">
+    {open && <McpSetup mcp={mcp} />}
   </Modal>;
 }

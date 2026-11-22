@@ -4,7 +4,7 @@ import assert from 'node:assert/strict';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
 import { once } from 'node:events';
-import { mkdir, mkdtemp, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { createKeyStore } from '../../server/keys.mjs';
@@ -16,6 +16,9 @@ import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/
 
 const directory = await mkdtemp(join(tmpdir(), 'trazo-mcp-live-'));
 const keys = createKeyStore({ directory });
+let uiKey;
+const createKey = keys.create;
+keys.create = args => { const issued = createKey(args); if (args.name === 'Cursor prueba') uiKey = issued; return issued; };
 const bridge = createBridge({ redeemPairingCode: code => keys.redeemPairingCode(code) });
 const acceptedConsumers = new Set();
 const originalPoll = bridge.poll;
@@ -50,13 +53,26 @@ try {
     start_url: { url: appUrl }, environment: { viewport: { width: 1440, height: 1000, device_scale_factor: 1 }, locale: 'es-ES' },
     actions: [wait('editor-ready', 'canvas.excalidraw__canvas.interactive'), click('open-mcp', 'Conectar lienzo al MCP'),
       fill('pair-browser', '#mcp-pair-code', code), click('authorize-browser', 'Vincular navegador'),
-      wait('bridge-connected', 'header button[data-mcp-status="connected"]'), click('close-dialog', 'Cerrar diálogo'),
+      wait('bridge-connected', 'header button[data-mcp-status="connected"]'),
+      fill('key-name', '#mcp-key-name', 'Cursor prueba'), click('create-client-key', 'Crear clave'),
+      wait('key-issued', '#mcp-api-key[value^="trazo_"]'), click('verify-client-key', 'Comprobar conexión'),
+      wait('client-key-verified', '[data-mcp-check="passed"]'),
+      click('copy-cursor-config', 'Copiar configuración'), wait('cursor-config-copied', 'button[aria-label="Copiar configuración"][data-copied="true"]'),
+      { step_id: 'claude-tab', action: 'click', locator: role('tab', 'Claude Code'), timeout_ms: 10_000 },
+      click('copy-claude-config', 'Copiar configuración'), wait('claude-config-copied', 'button[aria-label="Copiar configuración"][data-copied="true"]'),
+      { step_id: 'codex-tab', action: 'click', locator: role('tab', 'Codex'), timeout_ms: 10_000 },
+      click('copy-codex-config', 'Copiar configuración'), wait('codex-config-copied', 'button[aria-label="Copiar configuración"][data-copied="true"]'),
+      { step_id: 'codex-command', action: 'click', locator: css('.mcp-cli summary'), timeout_ms: 10_000 },
+      click('copy-codex-command', 'Copiar comando'), wait('codex-command-copied', 'button[aria-label="Copiar comando"][data-copied="true"]'),
+      click('close-setup', 'Cerrar diálogo'), click('reopen-setup', 'Conectar lienzo al MCP'),
+      wait('secret-cleared-on-close', '#mcp-api-key[value=""]'), click('revoke-client-key', 'Revocar Cursor prueba'),
+      click('confirm-revocation', 'Confirmar revocación'), click('close-dialog', 'Cerrar diálogo'),
       wait('undo-ready', boardSelector('Comprobar deshacer')), click('undo-mcp-update', 'Deshacer'),
       wait('mcp-operations-saved', boardSelector('MCP verificado')),
       { step_id: 'reload-browser', action: 'goto', destination: { url: appUrl }, wait_until: 'load', timeout_ms: 30_000 },
       wait('restored-and-read-through-mcp', boardSelector('MCP restaurado')),
       { step_id: 'final-render', action: 'wait_for_timeout', duration_ms: 1000 }],
-    capture: { after_each_step: ['accessibility'], at_end: ['accessibility', 'screenshot', 'dom'], events: ['console', 'page-errors'] },
+    capture: { after_each_step: [], at_end: ['accessibility', 'screenshot', 'dom'], events: ['console', 'page-errors'] },
   };
   await mkdir('.research', { recursive: true });
   await writeFile('.research/mcp-live-scenario.json', JSON.stringify(scenario, null, 2));
@@ -70,6 +86,11 @@ try {
       await pause(300);
     }
     checks.push('Browser explicitly paired through the real application');
+    const uiUntil = Date.now() + 60_000;
+    while (!uiKey || !keys.list().some(row => row.id === uiKey.id && row.revokedAt)) { assert.ok(Date.now() < uiUntil, 'The setup panel did not finish key management'); await pause(200); }
+    const revoked = await fetch('http://127.0.0.1:5174/mcp/', { method: 'POST', headers: { 'Content-Type': 'application/json', Accept: 'application/json, text/event-stream', Authorization: `Bearer ${uiKey.key}` }, body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'ping' }) });
+    assert.equal(revoked.status, 401);
+    checks.push('UI key issuance, connection check, copied configs, secret disposal and revocation');
     const created = await call('create_board', { name: 'Creado por MCP', templateId: 'flow' });
     let board = await call('get_board', { boardId: created.id });
     const scene = JSON.parse(board.scene);
@@ -135,6 +156,7 @@ try {
   const browser = promisify(execFile)(process.execPath, ['scripts/rea-mcp.mjs', 'call', 'capture_browser_scenario', '.research/mcp-live-scenario.json', '.research/mcp-live-evidence.json'], { timeout: 180_000, maxBuffer: 1_000_000 });
   browser.catch(() => bridge.close());
   const [report, replay] = await Promise.all([workflow(), browser]);
+  assert.equal((await readFile('.research/mcp-live-evidence.json', 'utf8')).includes(uiKey.key), false, 'The issued UI key must not appear in saved evidence');
   console.info(replay.stdout.trim());
   await writeFile('.research/mcp-live-report.json', JSON.stringify({ passed: true, ...report }, null, 2));
   console.info(JSON.stringify({ passed: true, checks: report.checks }));

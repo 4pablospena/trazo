@@ -37,6 +37,9 @@ export function createBridge({ redeemPairingCode, now = Date.now, commandTimeout
     session.lastSeen = now();
   };
   return {
+    authorizeBrowser(token) {
+      if (!session || typeof token !== 'string' || hash(token) !== session.hash || session.expiresAt <= now()) throw problem('Vincula este navegador antes de gestionar claves.', 401);
+    },
     connect(code, workspaceId) {
       if (typeof workspaceId !== 'string' || !/^[\w-]{10,80}$/.test(workspaceId)) throw problem('Espacio de trabajo no válido.', 400);
       if (session && session.expiresAt > now() && session.lastSeen + leaseMs > now()) throw problem('Ya hay un navegador conectado. Desconéctalo antes de vincular otro.');

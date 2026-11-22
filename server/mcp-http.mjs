@@ -81,6 +81,13 @@ export function createMcpServer({ keyStore, enabled = false, tools = [], callToo
           if (!body || typeof body !== 'object' || Array.isArray(body)) return send(400, { error: 'Se requiere un objeto JSON.' });
           if (path === '/bridge/connect') return send(200, bridge.connect(body.code, body.workspaceId));
           const token = /^Bearer (\S+)$/i.exec(req.headers.authorization ?? '')?.[1];
+          if (path.startsWith('/bridge/keys/')) {
+            bridge.authorizeBrowser(token);
+            if (path === '/bridge/keys/list') return send(200, { keys: keyStore.list() });
+            if (path === '/bridge/keys/create') return send(200, keyStore.create({ name: body.name, days: body.days }));
+            if (path === '/bridge/keys/revoke') { keyStore.revoke(body.id); return send(200, { revoked: true }); }
+            return send(404, 'Not Found');
+          }
           if (path === '/bridge/poll') return send(200, { command: await bridge.poll(token, body.consumerId) });
           if (path === '/bridge/heartbeat') { bridge.heartbeat(token, body.consumerId); return send(200, { connected: true }); }
           if (path === '/bridge/result') { bridge.complete(token, body.consumerId, body.id, body.result); return send(200, { accepted: true }); }
