@@ -1,106 +1,60 @@
 # Trazo
 
-Una aplicación de dibujo con el editor real de Excalidraw, tableros locales y plantillas. La interfaz está en español y conserva el lienzo, las herramientas, los atajos, las notas adhesivas y la biblioteca del editor.
+Un espacio de dibujo basado en Excalidraw para crear diagramas, organizar ideas y trabajar con tus IA desde un lienzo editable.
+
+## Stack
+
+- **Frontend:** React y TypeScript con Vite.
+- **Interfaz:** Tailwind CSS, Headless UI y Lucide.
+- **Editor:** Excalidraw y Mermaid to Excalidraw.
+- **Servidor MCP:** Node.js y HTTP.
+- **Almacenamiento:** IndexedDB para los tableros y SQLite para las claves.
 
 ## Arrancar
 
-Requisitos: Node.js 24 LTS y npm. Las dependencias ya están instaladas en este equipo.
-
-```sh
-cd /Users/pablosuarezpena/Documents/ChatGPT/Excalidraw
-npm run dev
-```
-
-Abrir **[http://127.0.0.1:5173/](http://127.0.0.1:5173/)**. Para detener el servidor, pulsar `Ctrl+C` en su terminal. Si el puerto ya está ocupado por Trazo, abrir esa dirección o detener el servidor anterior antes de arrancar otro.
-
-Para una instalación nueva:
+Necesitas **Node.js 24** y npm. Desde la carpeta del proyecto:
 
 ```sh
 npm ci
 npm run dev
 ```
 
-## Uso
+Abre [http://127.0.0.1:5173](http://127.0.0.1:5173). En los siguientes arranques basta con `npm run dev`.
 
-- **Tableros** abre la lista, con búsqueda y vistas previas. El menú de cada tablero permite cambiar el nombre, duplicarlo o eliminarlo.
-- El nombre de la barra superior se puede editar directamente.
-- **Nuevo** permite elegir un lienzo en blanco, un diagrama de flujo, un tablero de tareas o una lluvia de ideas.
-- El guardado es automático. Antes de cambiar de tablero se espera a que terminen las escrituras pendientes.
-- **Exportar** descarga un archivo editable `.excalidraw`, una imagen PNG o un SVG. El archivo editable incluye las imágenes utilizadas.
-- **Importar** valida el archivo y lo abre como un tablero nuevo. El tablero que estaba abierto se conserva.
-- La biblioteca se comparte entre los tableros de este navegador. El tema claro u oscuro también se recuerda.
+## Cómo funciona
 
-## Convertir Mermaid y Markdown
+Crea tableros en blanco o parte de una plantilla. Los dibujos se guardan automáticamente en tu navegador. Puedes importar archivos `.excalidraw` y exportar a Excalidraw, PNG o SVG.
 
-Pulsa **Convertir** en la barra superior, o **Convertir Mermaid o Markdown…** en el menú del lienzo.
+El botón **Convertir** transforma Mermaid y Markdown en contenido del lienzo. El texto queda editable; algunos tipos de diagramas se insertan como imágenes.
 
-1. Pega contenido o pulsa **Cargar archivo** para abrir un `.mmd`, `.mermaid`, `.md`, `.markdown` o `.txt`.
-2. Pulsa **Convertir a lienzo** y revisa la vista previa. Puedes ajustar el nombre del tablero.
-3. Pulsa **Crear tablero** para guardar el resultado como un tablero independiente.
+Los datos permanecen en el navegador: no hay sincronización entre dispositivos. Exporta tus tableros para trasladarlos o guardar una copia.
 
-Los archivos Markdown conservan el orden de sus títulos, texto, código y bloques de diagramas. El texto se transforma en tarjetas editables; los diagramas se extraen de bloques de código con lenguaje `mermaid` o `mmd`. Los enlaces y las referencias a imágenes del Markdown se conservan como texto. El resultado es texto plano editable, con títulos y bloques de código, y no reproduce todo el formato visual de Markdown.
+## Conectar tus IA
 
-Ejemplo:
-
-````markdown
-# Mi proyecto
-
-- Preparar el prototipo
-- Revisar los resultados
-
-```mermaid
-flowchart LR
-  A[Idea] --> B[Prototipo] --> C[Revisión]
-```
-````
-
-Los tipos de Mermaid compatibles con formas generan elementos editables. Otros tipos se insertan como imágenes; la vista previa indica cuándo sucede. Las imágenes generadas se incluyen en el guardado y en los archivos `.excalidraw`.
-
-El formato se detecta automáticamente, con prioridad a la extensión del archivo. El selector **Formato** permite elegir Mermaid o Markdown de forma explícita. Los límites son 1 MB por archivo, 100.000 caracteres, 12 diagramas y 120 secciones por documento. Un error de sintaxis conserva el contenido en el diálogo y permite corregirlo antes de crear el tablero.
-
-Las conversiones usan `@excalidraw/mermaid-to-excalidraw@3.6.0`, que ya estaba incluido como dependencia del editor y ahora se declara directamente. Su carga se hace al convertir. [API oficial](https://plus.excalidraw.com/docs/mermaid-to-excalidraw/api).
-
-Los datos se guardan en IndexedDB, asociados al navegador y a la dirección usada para abrir la aplicación. Utilizar siempre `127.0.0.1:5173` permite volver al mismo espacio. Las copias descargadas permiten trasladar un tablero a otro navegador o equipo.
-
-Si falla el guardado, se muestra un aviso con las acciones de reintentar y descargar una copia. Una escritura desde una pestaña desactualizada se rechaza para conservar la versión guardada por la otra pestaña. En ese caso, descargar la copia del dibujo abierto y recargar la página.
-
-## Comprobar y compilar
+Compatible con **Cursor, Claude Code y Codex** mediante MCP. Con Trazo abierto, ejecuta desde otra terminal:
 
 ```sh
-npm test
-npm run build
-npm run preview
+npm run conectar
 ```
 
-`build` comprueba TypeScript y genera `dist/`. `preview` sirve esa compilación en `http://127.0.0.1:4173/`. El puerto de preview tiene su propio almacenamiento del navegador.
+Abre el enlace que aparece, pulsa **Vincular navegador** y después **Crear clave**. Elige tu IA en el panel y usa **Copiar configuración**.
 
-Las fuentes se sincronizan desde el paquete oficial a `public/fonts/` antes de arrancar o compilar. Se eliminan las copias sobrantes y se conservan los archivos idénticos. Esa carpeta es generada y no se versiona.
+También puedes generar una clave API por terminal:
 
-## Estructura
+```sh
+npm run api:key
+```
 
-- `src/components/`: editor, selector de plantillas, lista de tableros y diálogos.
-- `src/useWorkspace.ts`: carga, cambios de tablero, importación y exportación.
-- `src/lib/storage.ts`: transacciones IndexedDB, metadatos y control de versiones.
-- `src/lib/save-queue.ts`: escrituras ordenadas, agrupación de cambios y reintentos.
-- `src/lib/templates.ts`: escenas editables de las plantillas.
-- `src/lib/document-input.ts`: lectura de archivos y separación de texto, código y bloques Mermaid.
-- `src/lib/convert-document.ts`: conversión y disposición de los elementos, con sus imágenes.
-- `scripts/rea-mcp.mjs`: cliente local MCP usado en la investigación y las comprobaciones de navegador.
+Mantén Trazo y el servidor MCP abiertos mientras tu IA trabaja con los dibujos.
 
-## Versión y alcance
+## Desarrollo
 
-Se utiliza `@excalidraw/excalidraw@0.18.0-2c3dcc0`, fijado en el lockfile. Su revisión declarada coincide con la web analizada en la fase 1. Es una versión previa a estable; la coincidencia no demuestra igualdad binaria con el sitio público.
-
-La aplicación funciona localmente. No incluye cuentas, colaboración entre personas, sincronización entre dispositivos ni servicios de IA. La revisión ampliada de importación/exportación, imágenes, biblioteca y accesibilidad corresponde a la fase 3.
-
-Consulta [el análisis de referencia](docs/reference-analysis.md) y [las comprobaciones de implementación](docs/phase-2-validation.md).
-
-Las pruebas del conversor con las APIs reales del navegador están en [tests/browser/README.md](tests/browser/README.md).
-
-## Dependencias en este equipo
-
-La primera instalación en `Documents` sufrió bloqueos de lectura. Una instalación nueva en `~/Library/Caches/trazo-dev/60108924f3ec/` permitió arrancar, compilar y ejecutar las pruebas. El `node_modules` local está enlazado a esa caché; el enlace no se versiona. No se ha determinado la causa del bloqueo de la primera instalación. En otros equipos basta con `npm ci`.
+```sh
+npm test             # Ejecutar las pruebas
+npm run build        # Comprobar TypeScript y compilar
+npm run preview      # Abrir la compilación local
+```
 
 ## Licencias
 
-El editor Excalidraw utiliza licencia MIT; se conserva su aviso en [public/licenses/LICENSE](public/licenses/LICENSE). Ver [THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) para las dependencias principales.
+Consulta los [avisos de terceros](THIRD_PARTY_NOTICES.md). Se conserva la [licencia MIT de Excalidraw](public/licenses/LICENSE).

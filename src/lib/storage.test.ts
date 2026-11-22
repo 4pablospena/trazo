@@ -11,6 +11,15 @@ function repository(name = crypto.randomUUID()) {
 afterEach(async () => { await Promise.all(repositories.splice(0).map(value => value.close())); });
 
 describe('durable local boards', () => {
+  it('rejects a stale MCP deletion without deleting the updated board', async () => {
+    const store = repository();
+    const board = await store.create('Original', 'original');
+    await store.save(board.id, 'Updated', 0);
+    await expect(store.remove(board.id, 0)).rejects.toBeInstanceOf(BoardConflictError);
+    expect((await store.get(board.id)).scene).toBe('Updated');
+    await store.remove(board.id, 1);
+    expect(await store.list()).toEqual([]);
+  });
   it('preserves the entire scene, including image data, across connections', async () => {
     const name = crypto.randomUUID();
     const first = repository(name);
