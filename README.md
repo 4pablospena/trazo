@@ -64,6 +64,36 @@ Los datos se guardan en IndexedDB, asociados al navegador y a la dirección usad
 
 Si falla el guardado, se muestra un aviso con las acciones de reintentar y descargar una copia. Una escritura desde una pestaña desactualizada se rechaza para conservar la versión guardada por la otra pestaña. En ese caso, descargar la copia del dibujo abierto y recargar la página.
 
+## MCP local — primera fase
+
+El servidor utiliza el mismo patrón HTTP de Mochi y Resizes.ai: `/mcp` y `/mcp/`, clave en `Authorization: Bearer`, protocolo sin sesiones y claves revocables. **Esta primera fase permite conectar el cliente, consultar herramientas y comprobar la conexión. El catálogo de herramientas está vacío hasta conectar el puente con el editor en la segunda fase.** El panel de configuración llegará en la tercera fase.
+
+Requiere Node.js 24. El servidor escucha únicamente en `127.0.0.1:5174`, independientemente del editor en el puerto 5173. Para activarlo en otra terminal:
+
+```sh
+MCP_ENABLED=true npm run mcp
+```
+
+También puedes copiar `.env.example` a `.env` y cambiar `MCP_ENABLED` a `true`. Cualquier otro valor deja `/mcp/` desactivado (404). `TRAZO_MCP_PORT` permite elegir otro puerto si el 5174 está ocupado.
+
+Crear una clave para cada cliente:
+
+```sh
+npm run mcp:keys -- create --name "Cursor" --days 30
+npm run mcp:keys -- list
+npm run mcp:keys -- revoke --id IDENTIFICADOR
+```
+
+La creación devuelve el secreto una sola vez. `list` muestra identificadores y metadatos; no permite recuperar el secreto. Cada clave dura de 1 a 365 días y hay un límite de 20 claves activas. La revocación se aplica a la siguiente solicitud, sin reiniciar el servidor. El acceso a la terminal y a la carpeta privada del usuario administra las claves; el servidor HTTP no expone una ruta pública para crearlas.
+
+Las claves se guardan como SHA-256 de un secreto aleatorio de 256 bits en `keys.sqlite`. En macOS, la carpeta predeterminada es `~/Library/Application Support/Trazo/mcp/`; en otros sistemas se utiliza `$XDG_DATA_HOME/Trazo/mcp/` o `~/.local/share/Trazo/mcp/`. `TRAZO_MCP_DATA_DIR` permite cambiarla, tanto al arrancar como al gestionar claves. La carpeta debe tener permisos 700 y el archivo 600. No se admiten enlaces simbólicos para la carpeta final ni el archivo. Las claves no se guardan en los tableros ni en el repositorio.
+
+La URL para los clientes es `http://127.0.0.1:5174/mcp/`. Envía la clave como `Authorization: Bearer trazo_…`. El servidor ignora cookies de sesión, valida `Host` y `Origin`, limita los mensajes a 1 MB y bloquea durante el resto de la ventana de un minuto tras cinco intentos fallidos. Solo permite los orígenes locales de Trazo en los puertos 5173 y 4173, además de su propio origen. Las configuraciones copiables para cada IA se añadirán con el panel.
+
+El transporte responde con JSON y admite las versiones `2025-03-26` y `2025-06-18`. Una versión de inicialización desconocida negocia `2025-06-18`; una cabecera `MCP-Protocol-Version` no admitida se rechaza. Las notificaciones devuelven 202 sin cuerpo, `GET` devuelve 405 porque no se ofrecen eventos SSE y `DELETE` autenticado es una operación vacía. No acepta lotes JSON-RPC. [Especificación del transporte MCP](https://modelcontextprotocol.io/specification/2025-06-18/basic/transports).
+
+`npm run test:mcp` comprueba el servidor con solicitudes HTTP reales y el SDK oficial de MCP, además de caducidad, revocación, persistencia, permisos y gestión de claves por terminal. Las pruebas crean sus propias carpetas y claves temporales.
+
 ## Comprobar y compilar
 
 ```sh
@@ -86,6 +116,8 @@ Las fuentes se sincronizan desde el paquete oficial a `public/fonts/` antes de a
 - `src/lib/document-input.ts`: lectura de archivos y separación de texto, código y bloques Mermaid.
 - `src/lib/convert-document.ts`: conversión y disposición de los elementos, con sus imágenes.
 - `scripts/rea-mcp.mjs`: cliente local MCP usado en la investigación y las comprobaciones de navegador.
+- `server/`: servidor MCP local, protocolo y almacenamiento de claves; su entrada es `server/index.mjs`.
+- `scripts/mcp-keys.mjs`: creación, listado y revocación local de claves.
 
 ## Versión y alcance
 

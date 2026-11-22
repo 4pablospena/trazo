@@ -9,3 +9,7 @@ public/fonts/
 .research/
 playwright-report/
 test-results/
+.trazo/
+*.sqlite
+*.sqlite-shm
+*.sqlite-wal
