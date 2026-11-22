@@ -1,0 +1,34 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": { "url": "https://excalidraw.com/" },
+  "environment": {
+    "viewport": { "width": 1440, "height": 900, "device_scale_factor": 1 },
+    "locale": "es-ES",
+    "timezone": "Europe/Madrid",
+    "color_scheme": "light"
+  },
+  "actions": [
+    {
+      "step_id": "editor-ready",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "canvas.excalidraw__canvas.interactive" },
+      "state": "visible",
+      "timeout_ms": 30000
+    },
+    { "step_id": "rectangle-properties", "action": "click", "locator": { "kind": "test_id", "value": "toolbar-rectangle" }, "timeout_ms": 5000 },
+    { "step_id": "main-menu", "action": "click", "locator": { "kind": "test_id", "value": "main-menu-trigger" }, "timeout_ms": 5000 },
+    { "step_id": "close-menu", "action": "press", "locator": { "kind": "css", "selector": ".excalidraw" }, "key": "Escape", "timeout_ms": 5000 },
+    { "step_id": "open-library", "action": "click", "locator": { "kind": "role", "role": "button", "name": "Biblioteca" }, "timeout_ms": 5000 },
+    { "step_id": "close-library", "action": "click", "locator": { "kind": "role", "role": "button", "name": "Cerrar" }, "timeout_ms": 5000 },
+    { "step_id": "extra-tools", "action": "click", "locator": { "kind": "test_id", "value": "dropdown-menu-button" }, "timeout_ms": 5000 }
+  ],
+  "capture": {
+    "after_each_step": ["dom", "accessibility"],
+    "at_end": ["screenshot", "dom", "accessibility", "url"],
+    "events": ["page-errors"]
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "browser": {
+    "mode": "launch",
+    "executable_path": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+    "headless": true
+  },
+  "start_url": { "url": "http://127.0.0.1:5173/tests/browser/document-conversion.html" },
+  "actions": [
+    {
+      "step_id": "test-suite-finished",
+      "action": "wait_for",
+      "locator": { "kind": "css", "selector": "#test-results[data-status]" },
+      "state": "attached",
+      "timeout_ms": 60000
+    }
+  ],
+  "capture": {
+    "at_end": ["dom", "accessibility"],
+    "events": ["page-errors", "console"]
+  }
+}

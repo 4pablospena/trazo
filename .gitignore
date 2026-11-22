@@ -1,0 +1,11 @@
+node_modules
+dist/
+public/fonts/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+.DS_Store
+.research/
+playwright-report/
+test-results/

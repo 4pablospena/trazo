@@ -1,0 +1,38 @@
+{
+  "name": "trazo-workspace",
+  "private": true,
+  "version": "0.1.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.12.0"
+  },
+  "scripts": {
+    "predev": "node scripts/prepare-assets.mjs",
+    "dev": "vite --host 127.0.0.1",
+    "prebuild": "node scripts/prepare-assets.mjs",
+    "build": "tsc -b && vite build",
+    "preview": "vite preview --host 127.0.0.1",
+    "typecheck": "tsc -b",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@excalidraw/excalidraw": "0.18.0-2c3dcc0",
+    "@excalidraw/mermaid-to-excalidraw": "3.6.0",
+    "@headlessui/react": "2.2.10",
+    "lucide-react": "1.77.0",
+    "react": "19.3.1",
+    "react-dom": "19.3.1"
+  },
+  "devDependencies": {
+    "@tailwindcss/vite": "4.3.5",
+    "@types/node": "24.10.1",
+    "@types/react": "19.3.0",
+    "@types/react-dom": "19.3.0",
+    "@vitejs/plugin-react": "6.3.0",
+    "fake-indexeddb": "6.2.8",
+    "tailwindcss": "4.3.5",
+    "typescript": "5.9.3",
+    "vite": "8.3.8",
+    "vitest": "5.1.1"
+  }
+}
